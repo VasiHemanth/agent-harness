@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --card: #1e293b;
+  --card-foreground: #f1f5f9;
+  --border: #334155;
+  --muted: #64748b;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Custom scrollbar for dark mode */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Plan Viewer Markdown Styles */
+.prose {
+  color: #cbd5e1;
+}
+.prose h1, .prose h2, .prose h3 {
+  color: #f8fafc;
+  font-weight: 800;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+.prose h1 { font-size: 1.5rem; }
+.prose h2 { font-size: 1.25rem; }
+.prose h3 { font-size: 1.1rem; }
+.prose p { margin-bottom: 1em; line-height: 1.6; }
+.prose ul, .prose ol { margin-left: 1.5em; margin-bottom: 1em; list-style-type: disc; }
+.prose li { margin-bottom: 0.25em; }
+.prose code { background: #020617; padding: 0.2em 0.4em; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; border: 1px solid #1e293b; }
+.prose pre { background: #020617; padding: 1em; border-radius: 12px; overflow-x: auto; border: 1px solid #1e293b; margin-bottom: 1.5em; }
+.prose blockquote { border-left: 4px solid #10b981; padding-left: 1em; italic: true; color: #94a3b8; }

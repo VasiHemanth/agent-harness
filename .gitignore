@@ -1,0 +1,43 @@
+# --- Planning docs (kept local, not shipped) ---
+fantastic_idea.md
+FUTURE_FEATURES_PLAN.md
+OPEN_SOURCE_ROADMAP.md
+PROJECT_PLAN.md
+TOKEN_ANALYTICS_PLAN.md
+TRACE_VIEW_ENHANCEMENT_PLAN.md
+
+# --- Node / frontend ---
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+frontend/package-lock.json
+package-lock.json
+
+# --- Python / backend ---
+backend/venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# --- Env + secrets ---
+.env
+.env.local
+.env.*.local
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# --- Logs ---
+*.log
+npm-debug.log*
+
+# --- Local-only notes / runtime artifacts ---
+chintaku
+.claude/settings.local.json
+.claude/agents/
