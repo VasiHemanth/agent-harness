@@ -48,6 +48,11 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
   },
+  verification: {
+    other: {
+      "msvalidate.01": "E3A699DC03845BF7441F05BCEC791E45",
+    },
+  },
 };
 
 const JSON_LD = {
