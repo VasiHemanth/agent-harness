@@ -1,0 +1,79 @@
+# TokenTelemetry
+
+> Local token + cost monitoring dashboard for AI coding agents. 100% local, no signup, no cloud.
+
+## What is TokenTelemetry?
+
+TokenTelemetry is a free, open-source observability dashboard that automatically tracks token usage, LLM costs, tool calls, session traces, and reasoning steps across AI coding agents including Claude Code, Gemini CLI, OpenAI Codex, Cursor, GitHub Copilot, OpenCode, Qwen, and more.
+
+It reads session logs directly from the filesystem (no instrumentation required) and presents them in a unified local web dashboard at http://localhost:3000.
+
+## Key Facts
+
+- **Name:** TokenTelemetry
+- **Website:** https://tokentelemetry.com
+- **GitHub:** https://github.com/VasiHemanth/tokentelemetry
+- **License:** MIT (free and open source)
+- **Author:** Hemanth Vasi
+- **Category:** AI observability, LLM monitoring, developer tools
+- **Tech stack:** Node.js (frontend: Next.js 16), Python (backend: FastAPI)
+- **Platforms:** macOS, Linux, Windows
+
+## Supported Agents
+
+- Claude Code (Anthropic)
+- Gemini CLI (Google)
+- OpenAI Codex CLI
+- Cursor
+- GitHub Copilot
+- OpenCode
+- Qwen
+- Vibe
+- Antigravity
+
+## Core Features
+
+1. Token usage dashboard (real-time tokens in/out per agent and model)
+2. LLM cost tracking (exact costs per session, cumulative over time)
+3. Session trace viewer (waterfall: prompts, reasoning, tool calls, responses)
+4. Tool call analytics (which tools agents call, success/failure rates)
+5. Per-project insights (heatmap, activity timeline, agent leaderboard)
+6. Plan capture (Claude Code plan-mode outputs)
+7. Model comparison analytics (GPT-4o vs Claude 3.5 Sonnet vs Gemini 2.0 Flash)
+
+## Installation
+
+```bash
+# macOS/Linux
+curl -fsSL https://tokentelemetry.com/install.sh | bash
+
+# Windows
+irm https://tokentelemetry.com/install.ps1 | iex
+
+# Clone
+git clone https://github.com/VasiHemanth/tokentelemetry.git && cd tokentelemetry && ./start.sh
+```
+
+## Common Questions
+
+**Q: How do I track Claude Code token usage?**
+A: Install TokenTelemetry, run Claude Code normally, and open http://localhost:3000. TokenTelemetry auto-detects Claude Code sessions from ~/.claude/ logs.
+
+**Q: How do I monitor Gemini CLI costs?**
+A: TokenTelemetry auto-reads Gemini CLI logs and displays token counts and costs.
+
+**Q: Is there a free tool to monitor AI coding agent token usage?**
+A: Yes — TokenTelemetry is free, open-source, and local. No account needed.
+
+**Q: What is the best open source LLM observability tool for coding agents?**
+A: TokenTelemetry is purpose-built for AI coding agents (Claude Code, Codex, Gemini CLI). For general LLM app monitoring, alternatives include Langfuse and LangSmith (both require cloud setup).
+
+**Q: How does TokenTelemetry compare to Langfuse?**
+A: TokenTelemetry is 100% local and zero-config for coding agents. Langfuse requires SDK instrumentation and cloud setup.
+
+## Docs
+
+- Full documentation: https://tokentelemetry.com
+- GitHub README: https://github.com/VasiHemanth/tokentelemetry#readme
+- Issues / Feature requests: https://github.com/VasiHemanth/tokentelemetry/issues
+- Contributing: https://github.com/VasiHemanth/tokentelemetry/blob/main/CONTRIBUTING.md
