@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use TokenTelemetry in your research or work, please cite it as below."
+type: software
+title: TokenTelemetry
+abstract: "A free, open-source, 100% local observability dashboard for AI coding agents. Tracks token usage, LLM costs, tool calls, session traces, and reasoning steps across Claude Code, Gemini CLI, OpenAI Codex, Cursor, GitHub Copilot, and more. No signup, no cloud, no telemetry."
+authors:
+  - family-names: Vasi
+    given-names: Hemanth
+    email: hemanth.vasi1716@gmail.com
+    orcid: null
+repository-code: https://github.com/VasiHemanth/tokentelemetry
+url: https://tokentelemetry.com
+license: MIT
+version: 1.0.0
+date-released: "2026-04-27"
+keywords:
+  - AI agents
+  - LLM monitoring
+  - token usage
+  - cost tracking
+  - observability
+  - Claude Code
+  - Gemini CLI
+  - Codex
+  - Cursor
+  - GitHub Copilot
+  - developer tools
+  - open source
+  - local-first
