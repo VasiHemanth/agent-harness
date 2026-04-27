@@ -28,8 +28,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: website/package-lock.json
+      
+          
       - run: npm ci || npm install
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
