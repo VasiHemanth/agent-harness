@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { FAQ_ITEMS } from "@/components/FAQ";
 
 const SITE_URL = "https://tokentelemetry.com";
 const TITLE = "TokenTelemetry — See exactly what your coding agents cost, think, and do";
@@ -70,6 +71,16 @@ const JSON_LD = {
   codeRepository: "https://github.com/VasiHemanth/tokentelemetry",
 };
 
+const FAQ_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ_ITEMS.map(({ q, a }) => ({
+    "@type": "Question",
+    name: q,
+    acceptedAnswer: { "@type": "Answer", text: a },
+  })),
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
@@ -78,6 +89,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_LD) }}
         />
       </body>
     </html>

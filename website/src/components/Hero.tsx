@@ -45,14 +45,13 @@ export default function Hero() {
             100% local · open source
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tighter leading-[1.05] mb-6 break-words">
-            See exactly what your{" "}
+            Token usage & cost monitoring for{" "}
             <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
-              coding agents
-            </span>{" "}
-            cost, think, and do.
+              AI coding agents
+            </span>
           </h1>
           <p className="text-slate-400 text-base sm:text-lg mb-2 max-w-xl leading-relaxed">
-            Local observability for Claude, Codex, Gemini, Cursor, Copilot — and 4 more. One command, no signup.
+            Claude Code, Codex, Gemini, Cursor, Copilot — see exactly what they cost, think, and do. One command, no signup.
           </p>
           <p className="text-slate-500 text-sm sm:text-base font-mono italic mb-8 sm:mb-10 transition-all">
             &ldquo;{PAINS[pain]}&rdquo;
@@ -75,7 +74,7 @@ export default function Hero() {
             </button>
           </div>
           <p className="text-[11px] text-slate-600 font-mono">
-            <span className="text-slate-500">npm package coming soon · </span>requires Node 18+, Python 3.9+
+            <span className="text-slate-500">MIT licensed · runs offline · </span>requires Node 18+, Python 3.9+
           </p>
 
           <div className="flex flex-wrap items-center gap-3 mt-8">
