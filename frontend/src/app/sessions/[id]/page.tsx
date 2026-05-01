@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ArrowLeft, Brain, Code, MessageSquare, Terminal, User, FileText, Activity, Zap, Info, Sparkles, GitBranch, LayoutPanelLeft, ListMusic, ChevronRight, ChevronLeft, Play, Pause, Wrench, Cpu, Folder, AlertTriangle, Hash, Clock, FileCode, Settings2, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Brain, Code, MessageSquare, Terminal, User, FileText, Activity, Zap, Info, Sparkles, GitBranch, LayoutPanelLeft, ListMusic, ChevronRight, ChevronLeft, Play, Pause, Wrench, Cpu, Folder, AlertTriangle, Hash, Clock, FileCode, Settings2, ChevronDown, ChevronUp, Search, X, MapPin, CornerDownRight } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 
@@ -80,6 +80,33 @@ function normalizeTs(evt: Event): number | undefined {
   return undefined;
 }
 
+function isErrorEvent(evt: Event): boolean {
+  try {
+    const raw = JSON.stringify(evt).toLowerCase();
+    return raw.includes('"is_error":true') || raw.includes('"status":"error"') || /\bexception\b/.test(raw);
+  } catch {
+    return false;
+  }
+}
+
+function eventSearchHaystack(evt: Event): string {
+  try {
+    return JSON.stringify(evt).toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+const miniMapColor: Record<StepKind, string> = {
+  user: "bg-blue-500",
+  assistant: "bg-emerald-500",
+  reasoning: "bg-amber-500",
+  tool: "bg-sky-500",
+  tool_result: "bg-slate-500",
+  meta: "bg-slate-700",
+  other: "bg-slate-700",
+};
+
 const stepRingClass: Record<StepKind, string> = {
   user: "ring-2 ring-blue-500/70",
   assistant: "ring-2 ring-emerald-500/70",
@@ -129,7 +156,12 @@ export default function SessionDetailPage() {
   const [timelineOpen, setTimelineOpen] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [projectConfig, setProjectConfig] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterKind, setFilterKind] = useState<"all" | StepKind | "errors">("all");
+  const [landmarksOpen, setLandmarksOpen] = useState(false);
   const stepRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const scrollRef = useRef<HTMLElement | null>(null);
+  const [scrollPct, setScrollPct] = useState(0);
 
   useEffect(() => {
     if (id && agent) {
@@ -194,9 +226,53 @@ export default function SessionDetailPage() {
     setIsPlaying((v) => !v);
   };
 
-  const visibleEvents = useMemo(() => {
-     return events.slice(0, playbackIndex);
-  }, [events, playbackIndex]);
+  // Per-event metadata (kind + error flag) computed once
+  const eventMeta = useMemo(() => {
+    return events.map((e) => ({ kind: eventKind(e), error: isErrorEvent(e) }));
+  }, [events]);
+
+  // Indices of events that should be visible (after playback, filter, and search)
+  // Returns the original-index list so jump-to / mini-map stay aligned.
+  const visibleIndices = useMemo(() => {
+    const upTo = Math.min(playbackIndex, events.length);
+    const q = searchQuery.trim().toLowerCase();
+    const result: number[] = [];
+    for (let i = 0; i < upTo; i++) {
+      const meta = eventMeta[i];
+      if (filterKind === "errors") {
+        if (!meta.error) continue;
+      } else if (filterKind !== "all" && meta.kind !== filterKind) {
+        continue;
+      }
+      if (q && !eventSearchHaystack(events[i]).includes(q)) continue;
+      result.push(i);
+    }
+    return result;
+  }, [events, eventMeta, playbackIndex, filterKind, searchQuery]);
+
+  const matchCount = visibleIndices.length;
+  const isFiltering = searchQuery.trim().length > 0 || filterKind !== "all";
+
+  // Landmark indices for "Jump to..."
+  const landmarks = useMemo(() => {
+    const firstError = eventMeta.findIndex((m) => m.error);
+    const firstTool = eventMeta.findIndex((m) => m.kind === "tool");
+    let lastAssistant = -1;
+    for (let i = eventMeta.length - 1; i >= 0; i--) {
+      if (eventMeta[i].kind === "assistant") {
+        lastAssistant = i;
+        break;
+      }
+    }
+    const end = events.length > 0 ? events.length - 1 : -1;
+    return { firstError, firstTool, lastAssistant, end };
+  }, [eventMeta, events.length]);
+
+  // Pairs of {idx, event} for the visible (filtered/searched) events. idx is the ORIGINAL index.
+  const visibleEvents = useMemo(
+    () => visibleIndices.map((i) => ({ idx: i, event: events[i] })),
+    [visibleIndices, events]
+  );
 
   // SAFE Helper to check content for a type (Fixes TypeError)
   const hasContentType = (event: Event, type: string) => {
@@ -479,11 +555,11 @@ export default function SessionDetailPage() {
                 </div>
                 
                 <div className="flex-1 flex flex-col gap-2">
-                   <input 
-                      type="range" 
-                      min="0" 
-                      max={events.length} 
-                      value={playbackIndex} 
+                   <input
+                      type="range"
+                      min="0"
+                      max={events.length}
+                      value={playbackIndex}
                       onChange={(e) => setPlaybackIndex(parseInt(e.target.value))}
                       className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
                    />
@@ -492,6 +568,45 @@ export default function SessionDetailPage() {
                       <span className="text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-500/20">Step {playbackIndex} of {events.length}</span>
                       <span>Real-time Tip</span>
                    </div>
+                </div>
+
+                <div className="relative">
+                   <button
+                      onClick={() => setLandmarksOpen((v) => !v)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-700 transition-colors text-[10px] font-black uppercase tracking-[0.2em]"
+                      title="Jump to landmarks"
+                   >
+                      <MapPin size={14} className="text-amber-400" />
+                      Jump to
+                      <ChevronDown size={12} className={landmarksOpen ? "rotate-180 transition-transform" : "transition-transform"} />
+                   </button>
+                   {landmarksOpen && (
+                      <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-50 py-1">
+                         {([
+                            { label: "First Error", idx: landmarks.firstError, tone: "text-red-400", icon: <AlertTriangle size={12} /> },
+                            { label: "Last Assistant", idx: landmarks.lastAssistant, tone: "text-emerald-400", icon: <MessageSquare size={12} /> },
+                            { label: "First Tool Call", idx: landmarks.firstTool, tone: "text-sky-400", icon: <Wrench size={12} /> },
+                            { label: "End", idx: landmarks.end, tone: "text-slate-300", icon: <CornerDownRight size={12} /> },
+                         ] as const).map((l) => (
+                            <button
+                               key={l.label}
+                               disabled={l.idx < 0}
+                               onClick={() => {
+                                  if (l.idx < 0) return;
+                                  jumpTo(l.idx);
+                                  setLandmarksOpen(false);
+                               }}
+                               className={`w-full text-left flex items-center gap-2 px-3 py-2 text-[11px] hover:bg-slate-800/60 transition-colors ${l.idx < 0 ? "opacity-30 cursor-not-allowed" : ""}`}
+                            >
+                               <span className={l.tone}>{l.icon}</span>
+                               <span className="flex-1 text-slate-200">{l.label}</span>
+                               <span className="text-[9px] font-mono text-slate-500">
+                                  {l.idx < 0 ? "—" : `step ${l.idx}`}
+                               </span>
+                            </button>
+                         ))}
+                      </div>
+                   )}
                 </div>
              </div>
           )}
@@ -517,30 +632,109 @@ export default function SessionDetailPage() {
              </div>
           </aside>
 
-          {/* CENTER: Conversation */}
-          <section className="overflow-y-auto max-h-[calc(100vh-200px)] p-8">
+          {/* CENTER: Conversation (with search/filter bar + mini-map overlay) */}
+          <div className="relative flex flex-col min-h-0 min-w-0 overflow-hidden max-h-[calc(100vh-200px)]">
+             {/* Search + Filter bar */}
+             <div className="border-b border-slate-800 bg-slate-950/40 px-6 py-3 flex items-center gap-3 flex-wrap min-w-0">
+                <div className="relative flex-1 min-w-[180px] max-w-md">
+                   <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                   <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search events..."
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-8 pr-8 py-1.5 text-[11px] text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500/60"
+                   />
+                   {searchQuery && (
+                      <button
+                         onClick={() => setSearchQuery("")}
+                         className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-200"
+                         title="Clear search"
+                      >
+                         <X size={12} />
+                      </button>
+                   )}
+                </div>
+                <div className="flex items-center gap-1 flex-wrap">
+                   {([
+                      { key: "all", label: "All" },
+                      { key: "user", label: "User" },
+                      { key: "assistant", label: "Assistant" },
+                      { key: "reasoning", label: "Reasoning" },
+                      { key: "tool", label: "Tools" },
+                      { key: "errors", label: "Errors" },
+                   ] as const).map((p) => {
+                      const active = filterKind === p.key;
+                      const isErrPill = p.key === "errors";
+                      return (
+                         <button
+                            key={p.key}
+                            onClick={() => setFilterKind(p.key)}
+                            className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border transition-colors ${
+                               active
+                                  ? isErrPill
+                                     ? "bg-red-500/15 text-red-300 border-red-500/40"
+                                     : "bg-blue-500/15 text-blue-300 border-blue-500/40"
+                                  : "bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-200 hover:border-slate-700"
+                            }`}
+                         >
+                            {p.label}
+                            {p.key === "errors" && stats.errors > 0 && (
+                               <span className="ml-1 text-[8px] font-mono opacity-70">{stats.errors}</span>
+                            )}
+                         </button>
+                      );
+                   })}
+                </div>
+                {isFiltering && (
+                   <span className="text-[9px] font-mono text-slate-500 ml-auto">
+                      {matchCount} of {playbackIndex} match{matchCount === 1 ? "" : "es"}
+                   </span>
+                )}
+             </div>
+
+             {/* Scrollable events */}
+             <section
+                ref={(el) => { scrollRef.current = el; }}
+                onScroll={(e) => {
+                   const el = e.currentTarget;
+                   const max = el.scrollHeight - el.clientHeight;
+                   setScrollPct(max > 0 ? el.scrollTop / max : 0);
+                }}
+                className="overflow-y-auto flex-1 p-8 pr-12"
+             >
              <div className={splitView ? "grid grid-cols-2 gap-8" : "space-y-8"}>
                 <div className="space-y-8">
                    {splitView && <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2 mb-2 flex items-center gap-2"><User size={14}/> User & Agent Dialogue</h3>}
-                   {visibleEvents.map((event, idx) => {
+                   {visibleEvents.length === 0 && isFiltering && (
+                      <div className="text-slate-500 text-[11px] italic px-2 py-8 text-center border border-dashed border-slate-800 rounded-2xl">
+                         No events match the current filter or search.
+                      </div>
+                   )}
+                   {visibleEvents.map(({ event, idx }) => {
                       const isReasoning = event.type === "agent_reasoning" || event.thoughts || (event.message?.role === "assistant" && (hasContentType(event, "thinking") || hasContentType(event, "thought"))) || event.payload?.type === "reasoning" || event.type === "assistant_thinking";
                       const isTool = event.toolCalls || (event.message?.role === "assistant" && hasContentType(event, "tool_use")) || (event.type === "user" && hasContentType(event, "tool_result")) || event.payload?.type === "function_call";
-                      
+
                       // Check for thinking inside Copilot assistant payload array
                       const hasThinkingPart = Array.isArray(event.payload) && event.payload.some((p: any) => p.kind === "thinking" || p.type === "thinking");
-                      
-                      // For Cursor/Claude/Codex/Copilot: If it's an message with BOTH text and tools/reasoning, 
+
+                      // For Cursor/Claude/Codex/Copilot: If it's an message with BOTH text and tools/reasoning,
                       // we want the text to show up in the dialogue column.
-                      const hasText = (Array.isArray(event.message?.content) && event.message.content.some((c: any) => (c.type === "text" || c.type === "input_text") && (c.text || c.input_text))) || 
+                      const hasText = (Array.isArray(event.message?.content) && event.message.content.some((c: any) => (c.type === "text" || c.type === "input_text") && (c.text || c.input_text))) ||
                                       (event.type === "response_item" && event.payload?.type === "message" && Array.isArray(event.payload.content) && event.payload.content.some((c: any) => c.text || c.input_text)) ||
                                       (event.type === "assistant" && Array.isArray(event.payload) && event.payload.some((p: any) => p.value && p.kind !== "thinking")) ||
                                       (event.type === "user" && (event.payload?.text || typeof event.payload === 'string')) ||
                                       (typeof event.content === 'string' && event.content.trim().length > 0);
-                      
+
                       if (splitView && ((isReasoning || hasThinkingPart) && !hasText)) return null;
                       const kind = eventKind(event);
+                      const hasError = eventMeta[idx]?.error;
+                      const wrapperCls = [
+                         activeStep === idx ? `${stepRingClass[kind]} rounded-3xl` : "",
+                         hasError ? "rounded-3xl ring-2 ring-red-500/60 shadow-[0_0_0_1px_rgba(239,68,68,0.25)]" : "",
+                      ].filter(Boolean).join(" ");
                       return (
-                         <div key={idx} ref={(el) => { stepRefs.current[idx] = el; }} className={activeStep === idx ? `${stepRingClass[kind]} rounded-3xl` : ""}>
+                         <div key={idx} ref={(el) => { stepRefs.current[idx] = el; }} className={wrapperCls}>
                             <EventCard event={event} mode={splitView ? "dialogue" : "all"} agent={agent} />
                          </div>
                       );
@@ -549,16 +743,21 @@ export default function SessionDetailPage() {
                 {splitView && (
                    <div className="space-y-8 border-l border-slate-800/50 pl-8">
                       <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2"><Brain size={14}/> Internal Reasoning & Tools</h3>
-                      {visibleEvents.map((event, idx) => {
+                      {visibleEvents.map(({ event, idx }) => {
                          const isReasoning = event.type === "agent_reasoning" || event.thoughts || (event.message?.role === "assistant" && (hasContentType(event, "thinking") || hasContentType(event, "thought"))) || event.payload?.type === "reasoning" || event.type === "assistant_thinking";
                          const isTool = event.toolCalls || (event.message?.role === "assistant" && hasContentType(event, "tool_use")) || (event.type === "user" && hasContentType(event, "tool_result")) || event.payload?.type === "function_call";
-                         
+
                          const hasThinkingPart = Array.isArray(event.payload) && event.payload.some((p: any) => p.kind === "thinking" || p.type === "thinking");
 
                          if (!isReasoning && !isTool && !hasThinkingPart) return null;
                          const kind = eventKind(event);
+                         const hasError = eventMeta[idx]?.error;
+                         const wrapperCls = [
+                            activeStep === idx ? `${stepRingClass[kind]} rounded-3xl` : "",
+                            hasError ? "rounded-3xl ring-2 ring-red-500/60 shadow-[0_0_0_1px_rgba(239,68,68,0.25)]" : "",
+                         ].filter(Boolean).join(" ");
                          return (
-                            <div key={idx} ref={(el) => { stepRefs.current[idx] = el; }} className={activeStep === idx ? `${stepRingClass[kind]} rounded-3xl` : ""}>
+                            <div key={idx} ref={(el) => { stepRefs.current[idx] = el; }} className={wrapperCls}>
                                <EventCard event={event} mode="brain" agent={agent} />
                             </div>
                          );
@@ -566,7 +765,19 @@ export default function SessionDetailPage() {
                    </div>
                 )}
              </div>
-          </section>
+             </section>
+
+             {/* Mini-map overlay (right edge of center column) */}
+             {events.length > 0 && (
+                <MiniMap
+                   eventMeta={eventMeta}
+                   activeStep={activeStep}
+                   playbackIndex={playbackIndex}
+                   scrollPct={scrollPct}
+                   onJump={(idx) => jumpTo(idx)}
+                />
+             )}
+          </div>
 
           {/* RIGHT: Sidebar */}
           <aside className="border-l border-slate-800 bg-slate-950/40 overflow-y-auto max-h-[calc(100vh-200px)] sticky top-[200px]">
@@ -733,6 +944,66 @@ function StepRow({ step, active, beyond, onClick }: { step: Step; active: boolea
       <span className={color[step.kind]}>{icon[step.kind]}</span>
       <span className="text-slate-300 truncate flex-1">{step.label}</span>
     </button>
+  );
+}
+
+function MiniMap({
+  eventMeta,
+  activeStep,
+  playbackIndex,
+  scrollPct,
+  onJump,
+}: {
+  eventMeta: { kind: StepKind; error: boolean }[];
+  activeStep: number | null;
+  playbackIndex: number;
+  scrollPct: number;
+  onJump: (idx: number) => void;
+}) {
+  const total = eventMeta.length;
+  if (total === 0) return null;
+  const stripRef = useRef<HTMLDivElement | null>(null);
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = stripRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const ratio = Math.max(0, Math.min(1, y / rect.height));
+    const idx = Math.min(total - 1, Math.floor(ratio * total));
+    onJump(idx);
+  };
+  // viewport rectangle ~ proportional band shown over the strip
+  const viewportH = 20; // % of strip
+  const viewportTop = Math.max(0, Math.min(100 - viewportH, scrollPct * (100 - viewportH)));
+  return (
+    <div
+      title="Session mini-map · click to jump"
+      className="absolute top-[58px] right-1 bottom-2 w-3 hidden md:flex flex-col items-stretch group z-10"
+    >
+      <div
+        ref={stripRef}
+        onClick={handleClick}
+        className="relative flex-1 rounded-full bg-slate-900 border border-slate-800 overflow-hidden cursor-pointer"
+      >
+        <div className="absolute inset-0 flex flex-col">
+          {eventMeta.map((m, i) => {
+            const beyond = i >= playbackIndex;
+            const colorCls = m.error ? "bg-red-500" : miniMapColor[m.kind];
+            return (
+              <div
+                key={i}
+                className={`flex-1 min-h-[1px] ${colorCls} ${beyond ? "opacity-25" : "opacity-80"} ${activeStep === i ? "outline outline-1 outline-white" : ""}`}
+              />
+            );
+          })}
+        </div>
+        {/* viewport indicator */}
+        <div
+          className="absolute left-0 right-0 border border-white/40 bg-white/10 rounded-sm pointer-events-none"
+          style={{ top: `${viewportTop}%`, height: `${viewportH}%` }}
+        />
+      </div>
+    </div>
   );
 }
 
