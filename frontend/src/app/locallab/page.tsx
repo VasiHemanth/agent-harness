@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL } from "@/config";
 
 import { useEffect, useState } from "react";
 import { Server, Database, HardDrive, Cpu, Activity, Zap, CheckCircle2, XCircle, Box, Download, ArrowRight, ShieldCheck } from "lucide-react";
@@ -15,7 +16,7 @@ export default function LocalLabPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/local-runtime")
+    fetch(`${API_BASE_URL}/local-runtime`)
       .then(res => res.json())
       .then(d => {
         setData(data); // Wait, I should set d

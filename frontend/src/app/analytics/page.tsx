@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL } from "@/config";
 
 import { useEffect, useState, useMemo } from "react";
 import { Activity, BarChart3, PieChart, TrendingUp, Zap, Info, DollarSign, MousePointer2, Cpu } from "lucide-react";
@@ -52,7 +53,7 @@ const AGENT_COLORS: Record<string, string> = {
   vibe: "#f472b6",         // Pink
   copilot: "#6366f1",      // Indigo
   cursor: "#3b82f6",       // Blue
-  opencode: "#f59e0b"      // Amber
+  opencode: "#f59e0b", "roo-code": "#2dd4bf", goose: "#ca8a04", droid: "#ef4444"      // Amber
 };
 
 export default function AnalyticsPage() {
@@ -60,7 +61,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/analytics")
+    fetch(`${API_BASE_URL}/analytics`)
       .then((res) => res.json())
       .then((data) => {
         setData(data);

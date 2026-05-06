@@ -16,4 +16,7 @@ export const AGENTS: Agent[] = [
   { name: "Cursor",       vendor: "Cursor",     captures: ["tokens", "traces", "plans"],                          logPath: "~/.cursor/ + workspaceStorage/",      accent: "text-blue-300" },
   { name: "GitHub Copilot", vendor: "GitHub",   captures: ["tokens", "traces", "cost"],                           logPath: "VS Code chatSessions/",               accent: "text-indigo-400" },
   { name: "OpenCode",     vendor: "OpenCode",   captures: ["tokens", "traces"],                                   logPath: "~/.local/share/opencode/",            accent: "text-amber-400" },
+  { name: "Roo Code",     vendor: "Roo Code",   captures: ["tokens", "traces", "cost"],                           logPath: "VS Code globalStorage/tasks/",        accent: "text-teal-400" },
+  { name: "Goose",        vendor: "Block",      captures: ["tokens", "traces", "sqlite"],                         logPath: "~/.local/share/goose/",               accent: "text-yellow-600" },
+  { name: "Droid",        vendor: "Factory",    captures: ["tokens", "traces", "jsonl"],                          logPath: "~/.factory/sessions/",                accent: "text-red-500" },
 ];

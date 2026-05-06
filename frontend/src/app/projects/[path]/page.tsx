@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL } from "@/config";
 
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { useParams } from "next/navigation";
@@ -68,7 +69,7 @@ export default function ProjectSessionsPage() {
 
   useEffect(() => {
     // Fetch project aggregate data (for plans)
-    fetch("http://127.0.0.1:8000/projects")
+    fetch(`${API_BASE_URL}/projects`)
       .then(res => res.json())
       .then(data => {
          const proj = data.find((p: Project) => p.path === decodedPath);
@@ -76,7 +77,7 @@ export default function ProjectSessionsPage() {
       });
 
     // Fetch session list
-    fetch("http://127.0.0.1:8000/sessions")
+    fetch(`${API_BASE_URL}/sessions`)
       .then((res) => res.json())
       .then((data) => {
         const projectSessions = data.filter((s: Session) => s.project === decodedPath);
@@ -242,7 +243,7 @@ export default function ProjectSessionsPage() {
                 setActiveTab("config");
                 if (!config && !configLoading) {
                   setConfigLoading(true);
-                  fetch(`http://127.0.0.1:8000/config?project=${encodeURIComponent(decodedPath)}`)
+                  fetch(`${API_BASE_URL}/config?project=${encodeURIComponent(decodedPath)}`)
                     .then(r => r.json()).then(setConfig).finally(() => setConfigLoading(false));
                 }
               }}

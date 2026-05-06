@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL } from "@/config";
 
 import { useEffect, useState, useMemo } from "react";
 import { Folder, Terminal, Database, Sparkles, ArrowLeft, Cpu, Users, ClipboardList, Zap, GitBranch, Orbit, ArrowRight, Search, MousePointer2, Code2 } from "lucide-react";
@@ -47,7 +48,7 @@ export default function ProjectsPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/projects")
+    fetch(`${API_BASE_URL}/projects`)
       .then((res) => res.json())
       .then((data) => {
         setProjects(data.sort((a: Project, b: Project) => b.session_count - a.session_count));

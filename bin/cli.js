@@ -150,6 +150,12 @@ function ensureFrontend() {
   }
 }
 
+const DEFAULT_FRONTEND_PORT = 3000;
+const DEFAULT_BACKEND_PORT = 8000;
+
+const FRONTEND_PORT = process.env.FRONTEND_PORT || DEFAULT_FRONTEND_PORT;
+const BACKEND_PORT = process.env.BACKEND_PORT || DEFAULT_BACKEND_PORT;
+
 async function start() {
   console.log('\nTokenTelemetry');
   console.log('--------------');
@@ -159,7 +165,7 @@ async function start() {
 
   // Fail fast if either required port is taken — otherwise Next bumps to 3001
   // and the auto-opened browser lands on the wrong URL.
-  await ensurePortsFree([3000, 8000]);
+  await ensurePortsFree([FRONTEND_PORT, BACKEND_PORT]);
 
   console.log('\n→ launching services…');
   const backend = spawn(venvPython, ['main.py'], {
@@ -167,19 +173,24 @@ async function start() {
     stdio: 'inherit',
     // detached on POSIX gives us a process group we can signal as a unit
     detached: !isWindows,
+    env: { ...process.env, BACKEND_PORT: String(BACKEND_PORT) }
   });
 
-  const frontend = spawn('npm', ['run', 'dev', '--', '--port', '3000'], {
+  const frontend = spawn('npm', ['run', 'dev', '--', '--port', String(FRONTEND_PORT)], {
     cwd: frontendDir,
     stdio: 'inherit',
     shell: true,
     detached: !isWindows,
-    env: { ...process.env, PORT: '3000' },
+    env: { 
+      ...process.env, 
+      PORT: String(FRONTEND_PORT),
+      NEXT_PUBLIC_API_URL: `http://127.0.0.1:${BACKEND_PORT}`
+    },
   });
 
-  const dashUrl = 'http://localhost:3000';
+  const dashUrl = `http://localhost:${FRONTEND_PORT}`;
   console.log(`\nDashboard:  ${dashUrl}`);
-  console.log('API:        http://127.0.0.1:8000');
+  console.log(`API:        http://127.0.0.1:${BACKEND_PORT}`);
   console.log('Press Ctrl+C to stop.\n');
 
   // Auto-launch the dashboard once Next.js is actually responding.

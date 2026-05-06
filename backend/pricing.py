@@ -14,6 +14,8 @@ PRICING = {
     "claude-sonnet-4-6": {"in": 3.00, "out": 15.00, "cached_read": 0.30},
     "claude-haiku-4-5":  {"in": 1.00, "out": 5.00,  "cached_read": 0.10},
     "claude-haiku-4.5":  {"in": 1.00, "out": 5.00,  "cached_read": 0.10},  # dot variant emitted by some agents (Copilot)
+    "claude-3-7-sonnet": {"in": 3.00, "out": 15.00, "cached_read": 0.30},
+    "claude-3.7-sonnet": {"in": 3.00, "out": 15.00, "cached_read": 0.30},
     
     # Claude 3.5
     "claude-3-5-sonnet": {"in": 3.00, "out": 15.00, "cached_read": 0.30},
@@ -27,6 +29,8 @@ PRICING = {
     "gpt-5-mini":        {"in": 0.15,  "out": 0.60,   "cached_read": 0.015},
     "gpt-5":             {"in": 0.625, "out": 5.00,   "cached_read": 0.06},
     "gpt-4.1":           {"in": 2.50,  "out": 10.00,  "cached_read": 1.25},
+    "o1-preview":        {"in": 15.00, "out": 60.00,  "cached_read": 1.50},
+    "o1-mini":           {"in": 3.00,  "out": 12.00,  "cached_read": 0.30},
 
     # --- Gemini 3 Series (Google) ---
     "gemini-3.1-pro":    {"in": 2.00, "out": 12.00, "cached_read": 0.20},
@@ -41,6 +45,18 @@ PRICING = {
     "gemini-2.0-flash":  {"in": 0.075, "out": 0.30, "cached_read": 0.0075},
     "gemini":            {"in": 1.25, "out": 5.00,  "cached_read": 0.125}, # Default Gemini tier
 
+    # --- Qwen Series (Alibaba) ---
+    "qwen3-72b":         {"in": 0.80, "out": 2.40,  "cached_read": 0.08},
+    "qwen3-32b":         {"in": 0.40, "out": 1.20,  "cached_read": 0.04},
+    "qwen3-coder-32b":   {"in": 0.40, "out": 1.20,  "cached_read": 0.04},
+    "qwq-32b":           {"in": 0.50, "out": 1.50,  "cached_read": 0.05},
+
+    # --- DeepSeek Series ---
+    "deepseek-v3":       {"in": 0.27, "out": 1.10,  "cached_read": 0.03},
+    "deepseek-r1":       {"in": 0.55, "out": 2.20,  "cached_read": 0.06},
+    "deepseek-chat":     {"in": 0.27, "out": 1.10,  "cached_read": 0.03},
+    "deepseek-reasoner": {"in": 0.55, "out": 2.20,  "cached_read": 0.06},
+
     # --- Specialized & Local ---
     "devstral-2":        {"in": 0.40, "out": 0.90,  "cached_read": 0.04},
     "glm-5.1":           {"in": 1.15, "out": 3.75,  "cached_read": 0.115},
@@ -51,7 +67,7 @@ PRICING = {
     "_default":          {"in": 2.00, "out": 10.00, "cached_read": 0.50}
 }
 
-PRICING_UPDATED = "2026-04-25"
+PRICING_UPDATED = "2026-05-06"
 
 def calculate_cost(model_name: str, input_tokens: int, output_tokens: int, cached_tokens: int = 0) -> float:
     """Returns estimated cost in USD based on 2026 model rates."""

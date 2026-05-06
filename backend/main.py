@@ -10,6 +10,16 @@ from pydantic import BaseModel
 from datetime import datetime, timezone
 from urllib.parse import unquote
 
+from providers.roocode import RooCodeProvider
+from providers.goose import GooseProvider
+from providers.droid import DroidProvider
+
+ROO_CODE_PROVIDER = RooCodeProvider()
+GOOSE_PROVIDER = GooseProvider()
+DROID_PROVIDER = DroidProvider()
+
+MODULAR_PROVIDERS = [ROO_CODE_PROVIDER, GOOSE_PROVIDER, DROID_PROVIDER]
+
 from harness_config import (
     load_aliases, apply_alias,
     load_hidden, hide_project, unhide_project,
@@ -29,17 +39,18 @@ def _now():
 
 app = FastAPI(title="TokenTelemetry API")
 
-# Enable CORS for Next.js frontend
+# Build allowed origins dynamically so custom ports (worktrees, etc.) work.
+_frontend_port = int(os.environ.get("FRONTEND_PORT", 3000))
+_default_ports = {3000, 3001, 3002, _frontend_port}
+_cors_origins = [
+    origin
+    for port in _default_ports
+    for origin in (f"http://localhost:{port}", f"http://127.0.0.1:{port}")
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-        "http://localhost:3002",
-        "http://127.0.0.1:3002",
-    ],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -168,7 +179,7 @@ async def get_available_agents():
     agents = []
     if CLAUDE_DIR.exists(): agents.append("claude")
     if CODEX_DIR.exists(): agents.append("codex")
-    if GEMINI_DIR.exists(): 
+    if GEMINI_DIR.exists():
         agents.append("gemini")
         if (GEMINI_DIR / "antigravity").exists() or list((GEMINI_DIR / "tmp").glob("*")):
             agents.append("antigravity")
@@ -178,8 +189,15 @@ async def get_available_agents():
     if VSCODE_STORAGE.exists(): agents.append("copilot")
     if OPENCODE_DB.exists(): agents.append("opencode")
     # if OLLAMA_DIR.exists(): agents.append("ollama")
-    return agents
 
+    # Modular providers
+    for provider in MODULAR_PROVIDERS:
+        try:
+            if provider.discover_sessions():
+                agents.append(provider.name)
+        except: pass
+
+    return agents
 # @app.get("/local-runtime")
 # async def get_local_runtime():
 #     import httpx
@@ -852,6 +870,27 @@ def _scan_sessions_sync():
         except Exception:
             pass
 
+    # Modular providers
+    for provider in MODULAR_PROVIDERS:
+        try:
+            for s in provider.discover_sessions():
+                # Ensure timestamp is datetime
+                if isinstance(s["timestamp"], (int, float)):
+                    s["timestamp"] = datetime.fromtimestamp(s["timestamp"], tz=timezone.utc)
+                
+                # Default empty values for frontend compatibility
+                if "tokens" not in s: s["tokens"] = {"input": 0, "output": 0, "cached": 0, "total": 0, "cost": 0.0}
+                if "mcp_tools" not in s: s["mcp_tools"] = []
+                if "has_plan" not in s: s["has_plan"] = False
+                if "plans" not in s: s["plans"] = []
+                if "model" not in s: s["model"] = "unknown"
+                if "artifacts" not in s: s["artifacts"] = []
+                if "display" not in s: s["display"] = f"Session {s['id'][:8]}"
+
+                sessions.append(s)
+        except Exception as e:
+            print(f"Error scanning provider {provider.name}: {e}")
+
     # Global sort by timestamp descending
     sessions.sort(key=lambda x: x["timestamp"], reverse=True)
     return sessions
@@ -1178,18 +1217,17 @@ async def get_session_detail(session_id: str, agent: str):
             return events
         finally:
             conn.close()
-    # elif agent == "ollama":
-    #     if (OLLAMA_DIR / "history").exists():
-    #         with open(OLLAMA_DIR / "history", "r") as f:
-    #             prompts = [line.strip() for line in f if line.strip()]
-    #             events = []
-    #             for i, p in enumerate(reversed(prompts)):
-    #                 events.append({
-    #                     "type": "user",
-    #                     "content": p,
-    #                     "normalized_timestamp": i * 1000
-    #                 })
-    #             return events
+
+    # Modular providers
+    for provider in MODULAR_PROVIDERS:
+        if agent == provider.name:
+            details = provider.get_session_details(session_id)
+            if details:
+                if isinstance(details, list):
+                    return details
+                return [details]
+            return {"error": "Session not found in provider"}
+
     return {"error": "Invalid agent"}
 
 @app.get("/projects")
@@ -1934,4 +1972,5 @@ async def get_config(project: Optional[str] = None):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    port = int(os.environ.get("BACKEND_PORT", 8000))
+    uvicorn.run(app, host="127.0.0.1", port=port)

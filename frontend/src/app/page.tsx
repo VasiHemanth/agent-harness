@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL } from "@/config";
 
 import { useEffect, useState } from "react";
 import { Activity, Clock, Database, Terminal, Sparkles, TrendingUp, Cpu, Zap, GitBranch, Orbit, ArrowRight, MousePointer2, Code2, Layers } from "lucide-react";
@@ -31,12 +32,12 @@ const AGENT_CONFIG: Record<string, { label: string, color: string, icon: any }> 
   cursor: { label: "Cursor", color: "blue", icon: MousePointer2 },
   // ollama: { label: "Ollama", color: "blue", icon: Zap },
   copilot: { label: "Copilot", color: "indigo", icon: GitBranch },
-  opencode: { label: "OpenCode", color: "amber", icon: Code2 }
+  opencode: { label: "OpenCode", color: "amber", icon: Code2 }, "roo-code": { label: "Roo Code", color: "teal", icon: Terminal }, goose: { label: "Goose", color: "yellow", icon: Database }, droid: { label: "Droid", color: "red", icon: Cpu }
 };
 
 const AGENT_HEX: Record<string, string> = {
   claude: "#f97316", codex: "#a855f7", gemini: "#06b6d4",
-  antigravity: "#10b981", qwen: "#3b82f6", vibe: "#f472b6", cursor: "#3b82f6", copilot: "#6366f1", opencode: "#f59e0b"
+  antigravity: "#10b981", qwen: "#3b82f6", vibe: "#f472b6", cursor: "#3b82f6", copilot: "#6366f1", opencode: "#f59e0b", "roo-code": "#2dd4bf", goose: "#ca8a04", droid: "#ef4444"
 };
 
 // interface QualityTotals {
@@ -61,9 +62,9 @@ export default function Home() {
 
   useEffect(() => {
     const load = () => Promise.all([
-      fetch("http://127.0.0.1:8000/sessions").then(res => res.json()),
-      fetch("http://127.0.0.1:8000/agents").then(res => res.json()),
-      fetch("http://127.0.0.1:8000/analytics").then(res => res.json()).catch(() => ({}))
+      fetch(`${API_BASE_URL}/sessions`).then(res => res.json()),
+      fetch(`${API_BASE_URL}/agents`).then(res => res.json()),
+      fetch(`${API_BASE_URL}/analytics`).then(res => res.json()).catch(() => ({}))
     ]).then(([sessionsData, agentsData, analyticsData]) => {
       const ts = (s: Session) => {
         const t = s.timestamp ? new Date(s.timestamp).getTime() : NaN;
@@ -246,7 +247,7 @@ export default function Home() {
                      const percent = (count / sessions.length) * 100;
                      const colors: any = {
                         claude: "bg-orange-500", codex: "bg-purple-500", gemini: "bg-cyan-500",
-                        antigravity: "bg-emerald-500", qwen: "bg-blue-500", vibe: "bg-pink-500", copilot: "bg-indigo-500", opencode: "bg-amber-500"
+                        antigravity: "bg-emerald-500", qwen: "bg-blue-500", vibe: "bg-pink-500", copilot: "bg-indigo-500", opencode: "bg-amber-500", "roo-code": "bg-teal-500", goose: "bg-yellow-600", droid: "bg-red-500"
                      };
                      return (
                         <div key={agent} className="space-y-2">
