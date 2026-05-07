@@ -32,12 +32,24 @@ const AGENT_CONFIG: Record<string, { label: string, color: string, icon: any }> 
   cursor: { label: "Cursor", color: "blue", icon: MousePointer2 },
   // ollama: { label: "Ollama", color: "blue", icon: Zap },
   copilot: { label: "Copilot", color: "indigo", icon: GitBranch },
-  opencode: { label: "OpenCode", color: "amber", icon: Code2 }, "roo-code": { label: "Roo Code", color: "teal", icon: Terminal }, goose: { label: "Goose", color: "yellow", icon: Database }, droid: { label: "Droid", color: "red", icon: Cpu }
+  opencode: { label: "OpenCode", color: "amber", icon: Code2 },
+  "roo-code": { label: "Roo Code", color: "teal", icon: Terminal },
+  goose: { label: "Goose", color: "yellow", icon: Database },
+  droid: { label: "Droid", color: "red", icon: Cpu },
+  "kilo-code": { label: "KiloCode", color: "violet", icon: Code2 },
+  "claude-desktop": { label: "Claude Desktop", color: "orange", icon: Terminal },
+  kiro: { label: "Kiro", color: "sky", icon: Sparkles },
+  pi: { label: "Pi", color: "rose", icon: Cpu },
+  omp: { label: "OMP", color: "lime", icon: Zap },
+  "cursor-agent": { label: "Cursor Agent", color: "blue", icon: MousePointer2 },
 };
 
 const AGENT_HEX: Record<string, string> = {
   claude: "#f97316", codex: "#a855f7", gemini: "#06b6d4",
-  antigravity: "#10b981", qwen: "#3b82f6", vibe: "#f472b6", cursor: "#3b82f6", copilot: "#6366f1", opencode: "#f59e0b", "roo-code": "#2dd4bf", goose: "#ca8a04", droid: "#ef4444"
+  antigravity: "#10b981", qwen: "#3b82f6", vibe: "#f472b6", cursor: "#3b82f6", copilot: "#6366f1", opencode: "#f59e0b",
+  "roo-code": "#2dd4bf", goose: "#ca8a04", droid: "#ef4444",
+  "kilo-code": "#8b5cf6", "claude-desktop": "#fb923c", kiro: "#38bdf8",
+  pi: "#fb7185", omp: "#84cc16", "cursor-agent": "#60a5fa",
 };
 
 // interface QualityTotals {
@@ -247,7 +259,11 @@ export default function Home() {
                      const percent = (count / sessions.length) * 100;
                      const colors: any = {
                         claude: "bg-orange-500", codex: "bg-purple-500", gemini: "bg-cyan-500",
-                        antigravity: "bg-emerald-500", qwen: "bg-blue-500", vibe: "bg-pink-500", copilot: "bg-indigo-500", opencode: "bg-amber-500", "roo-code": "bg-teal-500", goose: "bg-yellow-600", droid: "bg-red-500"
+                        antigravity: "bg-emerald-500", qwen: "bg-blue-500", vibe: "bg-pink-500",
+                        copilot: "bg-indigo-500", opencode: "bg-amber-500", "roo-code": "bg-teal-500",
+                        goose: "bg-yellow-600", droid: "bg-red-500", "kilo-code": "bg-violet-500",
+                        "claude-desktop": "bg-orange-400", kiro: "bg-sky-400",
+                        pi: "bg-rose-500", omp: "bg-lime-500", "cursor-agent": "bg-blue-400",
                      };
                      return (
                         <div key={agent} className="space-y-2">

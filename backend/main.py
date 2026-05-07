@@ -13,12 +13,36 @@ from urllib.parse import unquote
 from providers.roocode import RooCodeProvider
 from providers.goose import GooseProvider
 from providers.droid import DroidProvider
+from providers.kilocode import KiloCodeProvider
+from providers.claude_desktop import ClaudeDesktopProvider
+from providers.copilot import CopilotProvider
+from providers.kiro import KiroProvider
+from providers.pi import PiProvider, OmpProvider
+from providers.cursor_agent import CursorAgentProvider
 
 ROO_CODE_PROVIDER = RooCodeProvider()
 GOOSE_PROVIDER = GooseProvider()
 DROID_PROVIDER = DroidProvider()
+KILOCODE_PROVIDER = KiloCodeProvider()
+CLAUDE_DESKTOP_PROVIDER = ClaudeDesktopProvider()
+COPILOT_PROVIDER = CopilotProvider()
+KIRO_PROVIDER = KiroProvider()
+PI_PROVIDER = PiProvider()
+OMP_PROVIDER = OmpProvider()
+CURSOR_AGENT_PROVIDER = CursorAgentProvider()
 
-MODULAR_PROVIDERS = [ROO_CODE_PROVIDER, GOOSE_PROVIDER, DROID_PROVIDER]
+MODULAR_PROVIDERS = [
+    ROO_CODE_PROVIDER,
+    GOOSE_PROVIDER,
+    DROID_PROVIDER,
+    KILOCODE_PROVIDER,
+    CLAUDE_DESKTOP_PROVIDER,
+    COPILOT_PROVIDER,
+    KIRO_PROVIDER,
+    PI_PROVIDER,
+    OMP_PROVIDER,
+    CURSOR_AGENT_PROVIDER,
+]
 
 from harness_config import (
     load_aliases, apply_alias,
