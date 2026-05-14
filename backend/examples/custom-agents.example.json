@@ -1,6 +1,9 @@
 [
   {
     "name": "deepclaude",
+    "label": "DeepClaude",
+    "color": "#8b5cf6",
+    "icon": "puzzle",
     "log_glob": "~/.deepclaude/agent-*.jsonl",
     "fields": {
       "session_id": "agentId",

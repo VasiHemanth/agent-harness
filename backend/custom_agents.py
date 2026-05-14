@@ -9,7 +9,7 @@ triss, etc.) so their cost can appear side-by-side in the dashboard.
 Config schema — a JSON array of entries:
 [
   {
-    "name": "deepclaude",                       // agent label shown in UI
+    "name": "deepclaude",                       // agent key (used in /agents)
     "log_glob": "~/.deepclaude/agent-*.jsonl",  // expanded with ~ + globs
     "fields": {                                 // map JSONL keys → canonical fields
       "session_id":    "agentId",               // dot-paths supported (a.b.c)
@@ -21,7 +21,12 @@ Config schema — a JSON array of entries:
       "project":       "cwd",                   // optional
       "display":       "prompt"                 // optional
     },
-    "default_model": "deepseek-v4-pro"          // fallback when model missing
+    "default_model": "deepseek-v4-pro",         // fallback when model missing
+
+    // Optional UI overrides (frontend auto-picks distinct defaults otherwise):
+    "label": "DeepClaude",
+    "color": "#8b5cf6",                         // any CSS hex
+    "icon":  "puzzle"                           // lucide icon name (lowercase)
   }
 ]
 """
@@ -96,6 +101,18 @@ def get_available_custom_agents() -> List[str]:
     for cfg in load_custom_agent_configs():
         if _expand_glob(cfg["log_glob"]):
             out.append(cfg["name"])
+    return out
+
+
+def get_custom_agent_meta() -> List[Dict]:
+    """UI overrides per custom agent. Frontend fills in defaults for missing fields."""
+    out = []
+    for cfg in load_custom_agent_configs():
+        entry = {"name": cfg["name"]}
+        for key in ("label", "color", "icon"):
+            if cfg.get(key):
+                entry[key] = cfg[key]
+        out.append(entry)
     return out
 
 

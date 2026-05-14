@@ -1,0 +1,3 @@
+{"session_id":"sess-001","ts":"2026-05-14T09:00:00Z","model":"kimi-k2","usage":{"input_tokens":4200,"output_tokens":850,"cached_tokens":0},"cwd":"/Users/dev/litellm-test","prompt":"refactor this module"}
+{"session_id":"sess-001","ts":"2026-05-14T09:01:00Z","model":"kimi-k2","usage":{"input_tokens":1800,"output_tokens":200,"cached_tokens":600},"cwd":"/Users/dev/litellm-test","prompt":"continue"}
+{"session_id":"sess-002","ts":"2026-05-14T12:30:00Z","model":"qwen-coder","usage":{"input_tokens":9500,"output_tokens":1400,"cached_tokens":2000},"cwd":"/Users/dev/another-repo","prompt":"explain the algorithm"}

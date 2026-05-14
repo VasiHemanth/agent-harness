@@ -2,6 +2,8 @@
 
 import Navigation from "./Navigation";
 import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
+import { setCustomAgents, type CustomAgentOverride } from "@/lib/agents";
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -17,6 +19,14 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     }
     const saved = localStorage.getItem("sidebar-collapsed");
     if (saved) setIsCollapsed(saved === "true");
+  }, []);
+
+  // Hydrate the custom-agent visual registry once on mount. getAgent() reads
+  // from this for any agent name not in the built-in AGENTS const.
+  useEffect(() => {
+    api<CustomAgentOverride[]>("/custom-agent-meta")
+      .then(setCustomAgents)
+      .catch(() => { /* endpoint absent or empty — fall through to auto-defaults */ });
   }, []);
 
   const toggle = (collapsed: boolean) => {

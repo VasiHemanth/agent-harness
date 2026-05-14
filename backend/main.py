@@ -15,7 +15,7 @@ from harness_config import (
     load_hidden, hide_project, unhide_project,
     list_aliases, save_aliases,
 )
-from custom_agents import get_available_custom_agents, scan_custom_agents
+from custom_agents import get_available_custom_agents, scan_custom_agents, get_custom_agent_meta
 
 def _aware(dt):
     """Ensure datetime is timezone-aware UTC. Naive inputs are assumed to be UTC."""
@@ -183,6 +183,11 @@ async def get_available_agents():
         if name not in agents:
             agents.append(name)
     return agents
+
+@app.get("/custom-agent-meta")
+async def get_custom_agent_meta_endpoint():
+    """UI overrides for custom agents declared in ~/.tokentelemetry/custom-agents.json."""
+    return get_custom_agent_meta()
 
 # @app.get("/local-runtime")
 # async def get_local_runtime():
