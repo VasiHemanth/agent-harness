@@ -15,6 +15,7 @@ from harness_config import (
     load_hidden, hide_project, unhide_project,
     list_aliases, save_aliases,
 )
+from custom_agents import get_available_custom_agents, scan_custom_agents
 
 def _aware(dt):
     """Ensure datetime is timezone-aware UTC. Naive inputs are assumed to be UTC."""
@@ -178,6 +179,9 @@ async def get_available_agents():
     if VSCODE_STORAGE.exists(): agents.append("copilot")
     if OPENCODE_DB.exists(): agents.append("opencode")
     # if OLLAMA_DIR.exists(): agents.append("ollama")
+    for name in get_available_custom_agents():
+        if name not in agents:
+            agents.append(name)
     return agents
 
 # @app.get("/local-runtime")
@@ -851,6 +855,12 @@ def _scan_sessions_sync():
                 conn.close()
         except Exception:
             pass
+
+    # Custom agents (coworker proxies etc.) defined via ~/.tokentelemetry/custom-agents.json
+    try:
+        sessions.extend(scan_custom_agents(apply_alias, calculate_cost))
+    except Exception:
+        pass
 
     # Global sort by timestamp descending
     sessions.sort(key=lambda x: x["timestamp"], reverse=True)
