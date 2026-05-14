@@ -41,6 +41,19 @@ PRICING = {
     "gemini-2.0-flash":  {"in": 0.075, "out": 0.30, "cached_read": 0.0075},
     "gemini":            {"in": 1.25, "out": 5.00,  "cached_read": 0.125}, # Default Gemini tier
 
+    # --- Coworker / cheap-delegate models (public list prices, 2026) ---
+    # Used when Claude Code traffic is routed through a proxy (deepclaude, triss, etc.)
+    "deepseek-v4-pro":   {"in": 0.27, "out": 0.87,  "cached_read": 0.027},
+    "deepseek-v4":       {"in": 0.27, "out": 0.87,  "cached_read": 0.027},
+    "deepseek-v3.2":     {"in": 0.27, "out": 1.10,  "cached_read": 0.027},
+    "deepseek-v3":       {"in": 0.14, "out": 0.28,  "cached_read": 0.014},
+    "deepseek-coder":    {"in": 0.14, "out": 0.28,  "cached_read": 0.014},
+    "kimi-k2":           {"in": 0.60, "out": 2.50,  "cached_read": 0.06},
+    "kimi-k1":           {"in": 0.30, "out": 1.20,  "cached_read": 0.03},
+    "qwen-coder":        {"in": 0.20, "out": 0.60,  "cached_read": 0.02},
+    "qwen-2.5-coder":    {"in": 0.20, "out": 0.60,  "cached_read": 0.02},
+    "glm-coder":         {"in": 0.30, "out": 1.10,  "cached_read": 0.03},
+
     # --- Specialized & Local ---
     "devstral-2":        {"in": 0.40, "out": 0.90,  "cached_read": 0.04},
     "glm-5.1":           {"in": 1.15, "out": 3.75,  "cached_read": 0.115},
