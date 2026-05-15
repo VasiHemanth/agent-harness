@@ -19,15 +19,18 @@
   },
   {
     "name": "triss",
-    "log_glob": "~/.triss/sessions/*.jsonl",
+    "log_glob": "~/.cache/triss/usage.jsonl",
     "fields": {
-      "session_id": "session_id",
-      "timestamp": "timestamp",
+      "session_id": "call_id",
+      "timestamp": "ts",
       "model": "model",
       "input_tokens": "prompt_tokens",
       "output_tokens": "completion_tokens",
-      "project": "project_dir"
+      "cached_tokens": "cached_tokens",
+      "project": "cwd",
+      "display": "label",
+      "cost": "cost_usd"
     },
-    "default_model": "deepseek-v3"
+    "default_model": "deepseek-v4-flash"
   }
 ]

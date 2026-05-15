@@ -121,3 +121,13 @@ Acceptance per PR: `/sessions`, `/projects`, `/analytics` response shape is byte
 - DeepSeek/Kimi/Qwen coworker-proxy costs side-by-side with Claude (the original reddit ask).
 - In-house agents at companies that don't want to upstream parsers.
 - A clean place to add streaming/tailing later, if real-time becomes a need.
+
+## Future: parent-call grouping
+
+Some coworker proxies emit a `parent_call_id` on each record (e.g., Triss
+populates it when the host exports `TRISS_PARENT_CALL_ID` in the MCP env
+block). The natural extension: add an optional `parent_session_id` field
+to the mapping, and let the dashboard render a "rolled-up" view that
+groups every child call under its outer Claude session. Mechanically
+small; the UX question is the harder part (drill-down vs. inline child
+rows). Defer until two real sources need it.

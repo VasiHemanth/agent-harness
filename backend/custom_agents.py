@@ -19,7 +19,12 @@ Config schema — a JSON array of entries:
       "output_tokens": "usage.output_tokens",
       "cached_tokens": "usage.cached_tokens",   // optional
       "project":       "cwd",                   // optional
-      "display":       "prompt"                 // optional
+      "display":       "prompt",                // optional
+      "cost":          "cost_usd"               // optional, USD per record; when
+                                                //   present we sum it instead of
+                                                //   calling calculate_cost(), so
+                                                //   numbers match the proxy's
+                                                //   own bookkeeping exactly
     },
     "default_model": "deepseek-v4-pro",         // fallback when model missing
 
@@ -153,6 +158,7 @@ def scan_custom_agents(
                         project_raw = _get_path(row, fields.get("project")) or "unknown"
                         project = apply_alias(str(project_raw))
                         display = _get_path(row, fields.get("display"))
+                        cost_raw = _get_path(row, fields.get("cost")) if fields.get("cost") else None
 
                         if sid not in sessions:
                             sessions[sid] = {
@@ -167,6 +173,8 @@ def scan_custom_agents(
                                 "plans": [],
                                 "model": model,
                                 "artifacts": [],
+                                "_has_explicit_cost": False,
+                                "_explicit_cost_sum": 0.0,
                             }
                         s = sessions[sid]
                         s["tokens"]["input"] += in_tok
@@ -179,14 +187,26 @@ def scan_custom_agents(
                             s["timestamp"] = ts
                         if model and not s.get("model"):
                             s["model"] = model
-                        s["cost"] = calculate_cost(
-                            s.get("model"),
-                            s["tokens"]["input"],
-                            s["tokens"]["output"],
-                            s["tokens"]["cached"],
-                        )
+                        if cost_raw is not None:
+                            try:
+                                s["_explicit_cost_sum"] += float(cost_raw)
+                                s["_has_explicit_cost"] = True
+                            except (TypeError, ValueError):
+                                pass
+                        if s["_has_explicit_cost"]:
+                            s["cost"] = s["_explicit_cost_sum"]
+                        else:
+                            s["cost"] = calculate_cost(
+                                s.get("model"),
+                                s["tokens"]["input"],
+                                s["tokens"]["output"],
+                                s["tokens"]["cached"],
+                            )
             except Exception:
                 continue
 
-        out.extend(sessions.values())
+        for s in sessions.values():
+            s.pop("_has_explicit_cost", None)
+            s.pop("_explicit_cost_sum", None)
+            out.append(s)
     return out
