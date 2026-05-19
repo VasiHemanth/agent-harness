@@ -47,8 +47,13 @@ find . -mindepth 1 -maxdepth 1 -not -name ".git" -exec rm -rf {} +
 # Copy template scaffolding (plugin.yaml, README, LICENSE, .gitignore).
 cp -a "$TEMPLATE/." .
 
-# Copy the dashboard payload from the canonical source.
-cp -a "$SRC_PLUGIN/dashboard" .
+# Copy the dashboard payload from the canonical source. The canonical layout
+# (plugin/hermes-dashboard/) has manifest.json + dist/ at the root, but
+# Hermes expects them under dashboard/ in the installed plugin tree, so we
+# nest them here.
+mkdir -p dashboard
+cp -a "$SRC_PLUGIN/manifest.json" dashboard/manifest.json
+cp -a "$SRC_PLUGIN/dist" dashboard/dist
 
 # If a new version was supplied, bump plugin.yaml.
 if [[ -n "$NEW_VERSION" ]]; then
@@ -74,7 +79,7 @@ if [[ -n "$NEW_VERSION" ]]; then
   git tag -a "v$NEW_VERSION" -m "v$NEW_VERSION"
 fi
 
-echo "→ Pushing to $PUBLISH_REPO…"
+echo "→ Pushing to ${PUBLISH_REPO}…"
 git push origin HEAD
 [[ -n "$NEW_VERSION" ]] && git push origin "v$NEW_VERSION"
 
