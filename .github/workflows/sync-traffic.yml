@@ -1,0 +1,29 @@
+name: Sync GitHub Traffic to Sheets
+
+on:
+  schedule:
+    # Every Sunday at 23:00 UTC. GitHub only keeps 14 days of traffic data,
+    # so running weekly guarantees no daily rows are lost.
+    - cron: "0 23 * * 0"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install gspread google-auth requests
+
+      - name: Run traffic sync
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+          TT_SHEET_ID: ${{ secrets.TT_SHEET_ID }}
+        run: python scripts/sync_github_traffic.py
