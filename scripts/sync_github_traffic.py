@@ -20,9 +20,7 @@ import gspread
 import requests
 from google.oauth2.service_account import Credentials
 
-SPREADSHEET_ID = os.environ.get(
-    "TT_SHEET_ID", "1EKo8Z8vd7D0XN_7u5W5vUG23YI7f3zE2sYOscQ2PlEs"
-)
+SPREADSHEET_ID = os.environ["TT_SHEET_ID"]
 
 REPOS_TO_TRACK = {
     "VasiHemanth/tokentelemetry": "TokenTelemetry",
