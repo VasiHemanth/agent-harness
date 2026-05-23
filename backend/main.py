@@ -1232,11 +1232,16 @@ def _scan_sessions_sync():
                             if tname and tname not in mcp_tools: mcp_tools.append(tname)
                         if ptype == "step-finish":
                             tk = pdata.get("tokens") or {}
-                            tokens["input"] += tk.get("input", 0) or 0
-                            tokens["output"] += tk.get("output", 0) or 0
                             cache = tk.get("cache") or {}
-                            tokens["cached"] += (cache.get("read", 0) or 0) + (cache.get("write", 0) or 0)
+                            cache_write = (cache.get("write", 0) or 0)
+                            # cache writes are billed at input rate (~1.25x on Anthropic, but
+                            # calculate_cost only exposes one cached-read parameter, so fold
+                            # writes into input as the closest available approximation).
+                            tokens["input"]  += (tk.get("input", 0) or 0) + cache_write
+                            tokens["output"] += tk.get("output", 0) or 0
+                            tokens["cached"] += (cache.get("read", 0) or 0)
                     tokens["total"] = tokens["input"] + tokens["output"] + tokens["cached"]
+                    tokens["cost"] = calculate_cost(model, tokens["input"], tokens["output"], tokens["cached"])
                     project_path = srow["directory"] or "unknown"
                     title = srow["title"] or ""
                     display = (first_user or title)[:100]
@@ -1249,7 +1254,8 @@ def _scan_sessions_sync():
                     sessions.append({
                         "id": sid, "agent": "opencode", "project": apply_alias(srow["directory"] or "unknown"), "timestamp": ts,
                         "display": display, "tokens": tokens, "mcp_tools": mcp_tools,
-                        "has_plan": has_plan, "plans": plans, "model": model, "artifacts": []
+                        "has_plan": has_plan, "plans": plans, "model": model, "artifacts": [],
+                        "cost": tokens["cost"],
                     })
             finally:
                 conn.close()
