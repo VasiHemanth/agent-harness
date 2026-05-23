@@ -128,7 +128,7 @@ def _load_project_aliases() -> Dict[str, str]:
         try:
             with open(PROJECT_ALIASES_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except: pass
+        except Exception: pass
     return {}
 
 def _antigravity_infer_project(text: str) -> str:
@@ -351,7 +351,7 @@ def _hermes_memory_io(session_id: str) -> Dict[str, Any]:
                     if not raw: continue
                     try:
                         tcs = json.loads(raw)
-                    except: continue
+                    except Exception: continue
                     if not isinstance(tcs, list): continue
                     for tc in tcs:
                         fn = (tc or {}).get("function") or {}
@@ -360,7 +360,7 @@ def _hermes_memory_io(session_id: str) -> Dict[str, Any]:
                         args_raw = fn.get("arguments") or "{}"
                         try:
                             args = json.loads(args_raw) if isinstance(args_raw, str) else (args_raw or {})
-                        except: continue
+                        except Exception: continue
                         action = (args.get("action") or "").lower()
                         target = (args.get("target") or "memory").lower()
                         if action in {"add", "replace", "remove"} and target in {"memory", "user"}:
@@ -641,7 +641,7 @@ def _scan_sessions_sync():
                 if p_dir.is_dir():
                     for f in p_dir.glob("*.jsonl"):
                         claude_file_map[f.stem] = f
-        except: pass
+        except Exception: pass
 
         try:
             with open(claude_history, "r", encoding="utf-8", errors="replace") as f:
@@ -653,8 +653,8 @@ def _scan_sessions_sync():
                         ts = datetime.fromtimestamp(data.get("timestamp") / 1000, tz=timezone.utc) if data.get("timestamp") else _file_mtime_utc(claude_history)
                         if sid not in claude_sessions or ts > claude_sessions[sid]["timestamp"]:
                             claude_sessions[sid] = {"id": sid, "agent": "claude", "project": apply_alias(data.get("project", "unknown")), "timestamp": ts, "display": data.get("display"), "tokens": {"input": 0, "output": 0, "cached": 0, "total": 0}, "mcp_tools": [], "has_plan": False, "plans": [], "model": None, "artifacts": []}
-                    except: continue
-        except: pass
+                    except Exception: continue
+        except Exception: pass
 
         # Sort by recency (newest first) BEFORE truncating — insertion-order
         # slicing previously dropped genuinely recent sessions when totals
@@ -668,7 +668,7 @@ def _scan_sessions_sync():
                     if memory_dir.exists():
                         for mf in memory_dir.glob("*.md"):
                             sess["artifacts"].append({"name": mf.name, "path": str(mf), "type": "document"})
-                except: pass
+                except Exception: pass
 
                 # pending_edit_tool_ids: Set[str] = set()  # quality signals (commented out)
                 # prior_edit_failed = False
@@ -677,7 +677,7 @@ def _scan_sessions_sync():
                         for line in f:
                             try:
                                 data = json.loads(line)
-                            except: continue
+                            except Exception: continue
                             if data.get("type") == "assistant":
                                 msg = data.get("message", {})
                                 m = msg.get("model")
@@ -731,7 +731,7 @@ def _scan_sessions_sync():
                                 # else:
                                 #     prior_edit_failed = False
                                 #     pending_edit_tool_ids = set()
-                except: continue
+                except Exception: continue
         sessions.extend(claude_sessions.values())
     # 2. Codex
     codex_index = CODEX_DIR / "session_index.jsonl"
@@ -747,7 +747,7 @@ def _scan_sessions_sync():
                 if len(parts) >= 6:
                     sid = "-".join(parts[-5:])
                     codex_file_map[sid] = f
-        except: pass
+        except Exception: pass
 
         try:
             with open(codex_index, "r", encoding="utf-8", errors="replace") as f:
@@ -758,8 +758,8 @@ def _scan_sessions_sync():
                         ts = _aware(datetime.fromisoformat(data.get("updated_at").replace('Z', '+00:00'))) if data.get("updated_at") else _file_mtime_utc(codex_index)
                         if sid not in codex_sessions or ts > codex_sessions[sid]["timestamp"]:
                             codex_sessions[sid] = {"id": sid, "agent": "codex", "project": "unknown", "timestamp": ts, "text": data.get("thread_name"), "tokens": {"input": 0, "output": 0, "cached": 0, "total": 0}, "mcp_tools": [], "has_plan": False, "plans": [], "model": None, "artifacts": []}
-                    except: continue
-        except: pass
+                    except Exception: continue
+        except Exception: pass
         
         # Process the 100 most recent sessions
         for sid, sess in sorted(codex_sessions.items(), key=lambda kv: kv[1]["timestamp"], reverse=True)[:100]:
@@ -770,7 +770,7 @@ def _scan_sessions_sync():
                         for line in f:
                             try:
                                 data = json.loads(line)
-                            except: continue
+                            except Exception: continue
                             if data.get("type") == "session_meta":
                                 sess["project"] = apply_alias(data["payload"].get("cwd", "unknown"))
                                 if not sess.get("model") and data["payload"].get("model"):
@@ -801,8 +801,8 @@ def _scan_sessions_sync():
                                                 )
                                                 sess["has_plan"] = True
                                                 sess["plans"].append({"session_id": sid, "agent": "codex", "timestamp": sess["timestamp"], "content": content})
-                                        except: pass
-                except: pass
+                                        except Exception: pass
+                except Exception: pass
         for s in codex_sessions.values():
             if not s.get("model") and s.get("_provider"):
                 s["model"] = s["_provider"]
@@ -833,7 +833,7 @@ def _scan_sessions_sync():
                         if _child.is_dir():
                             _cp = str(_child)
                             _hash_to_path[_hashlib.sha256(_cp.encode()).hexdigest()] = _cp
-                except: pass
+                except Exception: pass
 
             # Pre-collect all chat session IDs globally to prevent cross-dir duplicates in logs.json
             _all_chat_sids: set = set()
@@ -843,7 +843,7 @@ def _scan_sessions_sync():
                     for _cf in _cd.glob("*.json"):
                         try:
                             _all_chat_sids.add(json.loads(_cf.read_text(encoding="utf-8", errors="replace")).get("sessionId") or "")
-                        except: pass
+                        except Exception: pass
             _all_log_sids: set = set()  # tracks log-only sessions added, prevents cross-dir duplication
 
             for tmp_dir in (GEMINI_DIR / "tmp").glob("*"):
@@ -891,7 +891,7 @@ def _scan_sessions_sync():
                                                     try: 
                                                         with open(pp, "r", encoding="utf-8", errors="replace") as pf:
                                                             plan_text = pf.read()
-                                                    except: plan_text = f"(plan stored at {pp})"
+                                                    except Exception: plan_text = f"(plan stored at {pp})"
                                                 if not plan_text:
                                                     plan_text = (tc.get("args") or {}).get("plan") or tc.get("resultDisplay") or ""
                                                 if plan_text:
@@ -915,11 +915,11 @@ def _scan_sessions_sync():
                                         for af in art_dir.iterdir():
                                             if af.suffix.lower() in (".mp4", ".mov"): artifacts.append({"name": af.name, "path": str(af), "type": "video"})
                                             elif af.suffix.lower() in (".png", ".webp", ".jpg", ".jpeg"): artifacts.append({"name": af.name, "path": str(af), "type": "image"})
-                                except: pass
+                                except Exception: pass
 
                                 tokens["cost"] = calculate_cost(model, tokens["input"], tokens["output"], tokens["cached"])
                                 sessions.append({"id": sid, "agent": effective_agent, "project": project_path, "timestamp": ts, "display": first_msg[:100], "tokens": tokens, "mcp_tools": mcp_tools, "has_plan": has_plan, "plans": plans, "model": model, "artifacts": artifacts, "cost": tokens["cost"]})
-                        except: continue
+                        except Exception: continue
                 # Scan logs.json for Antigravity sessions that have no chat JSON file
                 _logs_file = tmp_dir / "logs.json"
                 if _logs_file.exists():
@@ -939,7 +939,7 @@ def _scan_sessions_sync():
                             _first_msg = _msgs[0].get("message", "")
                             _last_ts_str = _session_last_ts.get(_lsid, "")
                             try: _lts = _aware(datetime.fromisoformat(_last_ts_str.replace('Z', '+00:00')))
-                            except: _lts = _now()
+                            except Exception: _lts = _now()
                             _plans = []; _has_plan = False
                             _plan_dir = tmp_dir / _lsid / "plans"
                             if _plan_dir.exists():
@@ -948,12 +948,12 @@ def _scan_sessions_sync():
                                         _pt = _pf.read_text(encoding="utf-8", errors="replace")
                                         _has_plan = True
                                         _plans.append({"session_id": _lsid, "agent": "antigravity", "timestamp": _lts, "content": _pt})
-                                    except: pass
+                                    except Exception: pass
                             _tkns = {"input": 0, "output": 0, "cached": 0, "total": 0, "cost": 0.0}
                             sessions.append({"id": _lsid, "agent": "antigravity", "project": project_path, "timestamp": _lts, "display": _first_msg[:100], "tokens": _tkns, "mcp_tools": [], "has_plan": _has_plan, "plans": _plans, "model": None, "artifacts": [], "cost": 0.0})
                             _all_log_sids.add(_lsid)
-                    except: pass
-        except: pass
+                    except Exception: pass
+        except Exception: pass
 
     # 3b. Antigravity brain/ folder — richer per-session artifacts (task/plan/walkthrough)
     if ANTIGRAVITY_BRAIN_DIR.exists():
@@ -973,7 +973,7 @@ def _scan_sessions_sync():
                         try: 
                             with open(fp, "r", encoding="utf-8", errors="replace") as f:
                                 body = f.read()
-                        except: body = ""
+                        except Exception: body = ""
                         if fname == "task.md": task = body
                         elif fname == "implementation_plan.md": plan = body
                         else: walkthrough = body
@@ -984,7 +984,7 @@ def _scan_sessions_sync():
                             if updated:
                                 ts = _aware(datetime.fromisoformat(updated.replace("Z", "+00:00")))
                                 if latest_ts is None or ts > latest_ts: latest_ts = ts
-                        except: pass
+                        except Exception: pass
                 
                 # Scan for media artifacts at the brain session root (Antigravity drops
                 # previews/screenshots here) and optionally in an artifacts/ subdir.
@@ -1000,7 +1000,7 @@ def _scan_sessions_sync():
                                 artifacts.append({"name": af.name, "path": str(af), "type": "video"})
                             elif ext in (".png", ".webp", ".jpg", ".jpeg", ".gif"):
                                 artifacts.append({"name": af.name, "path": str(af), "type": "image"})
-                except: pass
+                except Exception: pass
 
                 # Pull in a sampled slice of browser_recordings/<sid> frames
                 try:
@@ -1012,7 +1012,7 @@ def _scan_sessions_sync():
                             step = max(1, total // 12)  # cap at ~12 thumbnails
                             for p in frames[::step]:
                                 artifacts.append({"name": f"frame {p.name}", "path": str(p), "type": "image"})
-                except: pass
+                except Exception: pass
 
                 if not (task or plan or walkthrough or artifacts): continue
                 project = apply_alias(_antigravity_infer_project((task or "") + "\n" + (plan or "")))
@@ -1034,7 +1034,7 @@ def _scan_sessions_sync():
                     "model": "gemini (antigravity)",
                     "artifacts": artifacts
                 })
-            except: continue
+            except Exception: continue
 
     # 4. Qwen
     if QWEN_DIR.exists():
@@ -1073,11 +1073,11 @@ def _scan_sessions_sync():
                                                 if "plan" in t_text.lower() and len(t_text) > 100:
                                                     has_plan = True
                                                     plans.append({"session_id": sid, "agent": "qwen", "timestamp": last_ts, "content": t_text})
-                                except: continue
+                                except Exception: continue
                         tokens["total"] = tokens["input"] + tokens["output"] + tokens["cached"]
                         tokens["cost"] = calculate_cost(model, tokens["input"], tokens["output"], tokens.get("_cached_sum", tokens["cached"]))
                         sessions.append({"id": sid, "agent": "qwen", "project": project_path, "timestamp": last_ts, "display": first_msg[:100], "tokens": tokens, "mcp_tools": mcp_tools, "has_plan": has_plan, "plans": plans, "model": model, "artifacts": artifacts, "cost": tokens["cost"]})
-                    except: continue
+                    except Exception: continue
 
     # 5. Vibe
     if VIBE_DIR.exists():
@@ -1094,7 +1094,7 @@ def _scan_sessions_sync():
                     project_path = apply_alias(meta.get("environment", {}).get("working_directory", "unknown"))
                     tokens["cost"] = calculate_cost(model, tokens["input"], tokens["output"], tokens["cached"])
                     sessions.append({"id": sid, "agent": "vibe", "project": project_path, "timestamp": ts, "display": f"Vibe Session {sid[:8]}", "tokens": tokens, "mcp_tools": list(set(mcp_tools)), "has_plan": False, "plans": [], "model": model, "artifacts": [], "cost": tokens["cost"]})
-            except: continue
+            except Exception: continue
 
     # 6. Cursor
     if CURSOR_DIR.exists():
@@ -1107,7 +1107,7 @@ def _scan_sessions_sync():
                         folder = data.get("folder")
                         if folder:
                             cursor_map[ws.parent.name] = unquote(folder.replace("file://", ""))
-                except: continue
+                except Exception: continue
 
         for pd in (CURSOR_DIR / "projects").glob("*"):
             if pd.is_dir():
@@ -1134,7 +1134,7 @@ def _scan_sessions_sync():
                             if term_dir.exists():
                                 for tf in term_dir.glob("*.txt"):
                                     artifacts.append({"name": f"Terminal: {tf.name}", "path": str(tf), "type": "terminal"})
-                        except: pass
+                        except Exception: pass
 
                         if cf.exists():
                             try:
@@ -1150,7 +1150,7 @@ def _scan_sessions_sync():
                                     for line in f:
                                         try:
                                             data = json.loads(line)
-                                        except: continue
+                                        except Exception: continue
                                         msg = data.get("message", {}) if isinstance(data.get("message"), dict) else {}
                                         if data.get("role") == "user" and not first_msg:
                                             c = msg.get("content", [])
@@ -1184,7 +1184,7 @@ def _scan_sessions_sync():
                                 tokens["total"] = tokens["input"] + tokens["output"] + tokens["cached"]
                                 tokens["cost"] = calculate_cost(model, tokens["input"], tokens["output"], tokens.get("_cached_sum", tokens["cached"]))
                                 sessions.append({"id": sid, "agent": "cursor", "project": project_path, "timestamp": mtime, "display": first_msg[:100], "tokens": tokens, "mcp_tools": mcp_tools, "subagents": subagents, "has_plan": has_plan, "plans": plans, "model": model, "artifacts": artifacts, "cost": tokens["cost"]})
-                            except: continue
+                            except Exception: continue
 
     # 7. Copilot
     if VSCODE_STORAGE.exists():
@@ -1228,8 +1228,8 @@ def _scan_sessions_sync():
                             tokens["total"] = tokens["input"] + tokens["output"] + tokens["cached"]
                             tokens["cost"] = calculate_cost(model, tokens["input"], tokens["output"], tokens["cached"])
                             sessions.append({"id": sid, "agent": "copilot", "project": project_path, "timestamp": last_ts, "display": first_msg[:100], "tokens": tokens, "mcp_tools": [], "has_plan": len(plans) > 0, "plans": plans, "model": model, "artifacts": [], "cost": tokens["cost"]})
-                    except: continue
-            except: continue
+                    except Exception: continue
+            except Exception: continue
 
     # 8. OpenCode (SQLite: session / message / part)
     if OPENCODE_DB.exists():
@@ -1253,7 +1253,7 @@ def _scan_sessions_sync():
                     for mrow in conn.execute("SELECT data FROM message WHERE session_id=? ORDER BY time_created", (sid,)):
                         try:
                             mdata = json.loads(mrow["data"] or "{}")
-                        except: continue
+                        except Exception: continue
                         if mdata.get("role") == "assistant":
                             if not model:
                                 mi = mdata.get("model") or {}
@@ -1264,7 +1264,7 @@ def _scan_sessions_sync():
                     for prow in conn.execute("SELECT data FROM part WHERE session_id=? ORDER BY time_created", (sid,)):
                         try:
                             pdata = json.loads(prow["data"] or "{}")
-                        except: continue
+                        except Exception: continue
                         ptype = pdata.get("type")
                         if ptype == "text" and not first_user:
                             txt = pdata.get("text") or ""
@@ -1470,7 +1470,7 @@ async def get_artifact(path: str):
         try:
             if p.resolve().is_relative_to(a.resolve()):
                 is_safe = True; break
-        except: continue
+        except Exception: continue
 
     if not is_safe or not p.exists() or not p.is_file():
         from fastapi import HTTPException
@@ -1515,9 +1515,9 @@ async def get_session_detail(session_id: str, agent: str):
                         try:
                             ts = _aware(datetime.fromisoformat(data["timestamp"].replace('Z', '+00:00')))
                             data["normalized_timestamp"] = ts.timestamp() * 1000
-                        except: pass
+                        except Exception: pass
                     events.append(data)
-                except: continue
+                except Exception: continue
         return events
     elif agent == "codex":
         files = list(CODEX_DIR.glob(f"sessions/**/rollout-*{session_id}*.jsonl"))
@@ -1531,9 +1531,9 @@ async def get_session_detail(session_id: str, agent: str):
                         try:
                             ts = _aware(datetime.fromisoformat(data["timestamp"].replace('Z', '+00:00')))
                             data["normalized_timestamp"] = ts.timestamp() * 1000
-                        except: pass
+                        except Exception: pass
                     events.append(data)
-                except: continue
+                except Exception: continue
         return events
     elif agent in ["gemini", "antigravity"]:
         # Antigravity brain-based session (has no .json file; synthesize from markdown artifacts)
@@ -1542,7 +1542,7 @@ async def get_session_detail(session_id: str, agent: str):
             messages = []
             base_ts = None
             try: base_ts = brain_dir.stat().st_mtime * 1000
-            except: base_ts = 0
+            except Exception: base_ts = 0
             for i, (fname, role, label) in enumerate([
                 ("task.md", "user", "User task"),
                 ("implementation_plan.md", "gemini", "Implementation plan"),
@@ -1551,7 +1551,7 @@ async def get_session_detail(session_id: str, agent: str):
                 fp = brain_dir / fname
                 if not fp.exists(): continue
                 try: body = fp.read_text(errors="ignore")
-                except: continue
+                except Exception: continue
                 text = f"**{label}**\n\n{body}"
                 # User expects array form; assistant ("gemini") renderer expects a string.
                 content = [{"type": "text", "text": text}] if role == "user" else text
@@ -1580,7 +1580,7 @@ async def get_session_detail(session_id: str, agent: str):
                         try:
                             ts = _aware(datetime.fromisoformat(msg["timestamp"].replace('Z', '+00:00')))
                             msg["normalized_timestamp"] = ts.timestamp() * 1000
-                        except: pass
+                        except Exception: pass
                 return data
         # Antigravity log-only sessions: synthesize messages from the per-tmp-dir
         # logs.json that records every user/assistant turn with its sessionId.
@@ -1645,9 +1645,9 @@ async def get_session_detail(session_id: str, agent: str):
                         try:
                             ts = _aware(datetime.fromisoformat(data["timestamp"].replace('Z', '+00:00')))
                             data["normalized_timestamp"] = ts.timestamp() * 1000
-                        except: pass
+                        except Exception: pass
                     events.append(data)
-                except: continue
+                except Exception: continue
         return events
     elif agent == "vibe":
         short = (session_id or "").split("-")[0]
@@ -1660,7 +1660,7 @@ async def get_session_detail(session_id: str, agent: str):
                     with open(cf, "r", encoding="utf-8", errors="replace") as f:
                         if json.load(f).get("metadata", {}).get("session_id") == session_id:
                             files = [cf]; break
-                except: continue
+                except Exception: continue
         if not files: return {"error": "Not found"}
         with open(files[0], "r", encoding="utf-8", errors="replace") as f:
             data = json.load(f)
@@ -1671,7 +1671,7 @@ async def get_session_detail(session_id: str, agent: str):
                     try:
                         ts = _aware(datetime.fromisoformat(evt["timestamp"]))
                         evt["normalized_timestamp"] = ts.timestamp() * 1000
-                    except: pass
+                    except Exception: pass
                 events.append(evt)
             return events
     elif agent == "cursor":
@@ -1680,7 +1680,7 @@ async def get_session_detail(session_id: str, agent: str):
         events = []
         base_ts = None
         try: base_ts = files[0].stat().st_mtime * 1000
-        except: base_ts = 0
+        except Exception: base_ts = 0
         with open(files[0], "r", encoding="utf-8", errors="replace") as f:
             idx = 0
             for line in f:
@@ -1694,7 +1694,7 @@ async def get_session_detail(session_id: str, agent: str):
                     data["normalized_timestamp"] = (base_ts or 0) + idx * 1000
                     events.append(data)
                     idx += 1
-                except: continue
+                except Exception: continue
         return events
     elif agent == "copilot":
         files = list(VSCODE_STORAGE.glob(f"**/chatSessions/{session_id}.json"))
@@ -1722,13 +1722,13 @@ async def get_session_detail(session_id: str, agent: str):
             for mrow in conn.execute("SELECT id, data FROM message WHERE session_id=? ORDER BY time_created", (session_id,)):
                 try:
                     md = json.loads(mrow["data"] or "{}")
-                except: md = {}
+                except Exception: md = {}
                 role_by_msg[mrow["id"]] = md.get("role") or "assistant"
             events: List[Dict[str, Any]] = []
             for prow in conn.execute("SELECT message_id, time_created, data FROM part WHERE session_id=? ORDER BY time_created", (session_id,)):
                 try:
                     p = json.loads(prow["data"] or "{}")
-                except: continue
+                except Exception: continue
                 role = role_by_msg.get(prow["message_id"], "assistant")
                 ts_ms = prow["time_created"]
                 base = {"timestamp": ts_ms, "normalized_timestamp": ts_ms}
@@ -1783,7 +1783,7 @@ async def get_session_detail(session_id: str, agent: str):
                             if tcs_raw:
                                 try:
                                     tcs = json.loads(tcs_raw)
-                                except: tcs = []
+                                except Exception: tcs = []
                                 if isinstance(tcs, list):
                                     for tc in tcs:
                                         if not isinstance(tc, dict): continue
@@ -1794,7 +1794,7 @@ async def get_session_detail(session_id: str, agent: str):
                                         args: Any = None
                                         if isinstance(args_raw, str):
                                             try: args = json.loads(args_raw)
-                                            except: args = args_raw
+                                            except Exception: args = args_raw
                                         else:
                                             args = args_raw
                                         events.append({"type": "tool_call", "payload": {
@@ -1876,7 +1876,7 @@ async def get_projects(include_hidden: bool = False):
             agents_dir = Path(p["path"]) / ".agents" / "skills"
             if agents_dir.exists():
                 p["configured_subagent_count"] += len(list(agents_dir.glob("*/SKILL.md")))
-        except: pass
+        except Exception: pass
     out = list(projects.values())
     if not include_hidden:
         out = [p for p in out if not p["hidden"]]
@@ -2028,7 +2028,7 @@ def _parse_skill_md(p: Path):
     """Read SKILL.md frontmatter; return {name, description}."""
     try:
         text = p.read_text(errors="ignore")
-    except: return None
+    except Exception: return None
     
     name = p.parent.name
     description = ""
@@ -2043,7 +2043,7 @@ def _parse_skill_md(p: Path):
                         name = str(frontmatter["name"])
                     if frontmatter.get("description"):
                         description = str(frontmatter["description"])
-            except:
+            except Exception:
                 # Fallback to manual line parsing if YAML is slightly malformed
                 for line in text[3:end].splitlines():
                     if ":" in line:
@@ -2078,7 +2078,7 @@ def _collect_skills(base: Path, scope: str, agent: str):
 
 def _read_json(p: Path):
     try: return json.loads(p.read_text())
-    except: return None
+    except Exception: return None
 
 def _mcps_from_claude_settings(p: Path, scope: str):
     d = _read_json(p) or {}
@@ -2099,7 +2099,7 @@ def _mcps_from_json(p: Path, scope: str, agent: str):
 def _mcps_from_codex_toml(p: Path, scope: str):
     if not p.exists(): return []
     try: txt = p.read_text()
-    except: return []
+    except Exception: return []
     out = []
     current = None
     for line in txt.splitlines():
@@ -2121,7 +2121,7 @@ def _collect_subagents(base: Path, scope: str, agent: str):
     if not d.exists(): return out
     for md in d.rglob("*.md"):
         try: txt = md.read_text(errors="ignore")
-        except: continue
+        except Exception: continue
         name = md.stem
         description = ""
         tools = ""
@@ -2136,7 +2136,7 @@ def _collect_subagents(base: Path, scope: str, agent: str):
                         if fm.get("description"): description = str(fm["description"])
                         if fm.get("tools"): tools = str(fm["tools"])
                         if fm.get("model"): model = str(fm["model"])
-                except:
+                except Exception:
                     for line in txt[3:end].splitlines():
                         if ":" in line:
                             k, v = line.split(":", 1)
@@ -2160,7 +2160,7 @@ def _collect_commands(base: Path, scope: str, agent: str):
         for md in d.rglob("*.md"):
             try:
                 txt = md.read_text(errors="ignore")
-            except: continue
+            except Exception: continue
             name = md.stem
             description = ""
             if txt.startswith("---"):
@@ -2170,7 +2170,7 @@ def _collect_commands(base: Path, scope: str, agent: str):
                         fm = yaml.safe_load(txt[3:end])
                         if isinstance(fm, dict) and fm.get("description"):
                             description = str(fm["description"])
-                    except:
+                    except Exception:
                         for line in txt[3:end].splitlines():
                             if ":" in line:
                                 k, v = line.split(":", 1)
@@ -2181,7 +2181,7 @@ def _collect_commands(base: Path, scope: str, agent: str):
 
 def _memory_preview(p: Path, scope: str, agent: str):
     try: txt = p.read_text(errors="ignore")
-    except: return None
+    except Exception: return None
     return {"scope": scope, "agent": agent, "path": str(p), "name": p.name, "preview": txt[:2000], "truncated": len(txt) > 2000, "size": len(txt)}
 
 # ---- Plugin/extension collection (v1) ---------------------------------------
@@ -2256,7 +2256,7 @@ def _collect_plugins_vscode_style(ext_dir: Path, scope: str, agent: str, marketp
                     if isinstance(ident, str): enabled_set.add(ident.lower())
     out = []
     try: entries = list(ext_dir.iterdir())
-    except: return []
+    except Exception: return []
     for d in entries:
         if not d.is_dir(): continue
         pkg = _read_json(d / "package.json")
@@ -2292,7 +2292,7 @@ def _collect_plugins_gemini_style(ext_root: Path, scope: str, agent: str,
         if isinstance(d, dict): enablement = d
     out = []
     try: entries = list(ext_root.iterdir())
-    except: return []
+    except Exception: return []
     for ext_dir in entries:
         if not ext_dir.is_dir(): continue
         manifest = next((ext_dir / n for n in manifest_names if (ext_dir / n).exists()), None)
@@ -2370,15 +2370,15 @@ def _collect_plugins_codex(scope: str) -> List[dict]:
     if scope != "user" or not CODEX_PLUGIN_CACHE.exists(): return []
     out = []
     try: marketplaces = list(CODEX_PLUGIN_CACHE.iterdir())
-    except: return []
+    except Exception: return []
     for mp in marketplaces:
         if not mp.is_dir(): continue
         try: plugins = list(mp.iterdir())
-        except: continue
+        except Exception: continue
         for plugin in plugins:
             if not plugin.is_dir(): continue
             try: versions = [v for v in plugin.iterdir() if v.is_dir()]
-            except: continue
+            except Exception: continue
             if not versions: continue
             ver_dir = sorted(versions, key=lambda v: v.name)[-1]
             out.append({
@@ -2468,7 +2468,7 @@ async def get_config(project: Optional[str] = None):
             if name in seen_cmds: continue
             seen_cmds.add(name)
             try: txt = md.read_text(errors="ignore")
-            except: continue
+            except Exception: continue
             description = ""
             if txt.startswith("---"):
                 end = txt.find("---", 3)
