@@ -28,6 +28,16 @@ def _aware(dt):
 def _now():
     return datetime.now(timezone.utc)
 
+def _file_mtime_utc(path) -> datetime:
+    """File mtime as UTC datetime, falling back to _now() only if the file
+    is genuinely missing. Used as a historical timestamp fallback so
+    sessions with bad source-data timestamps don't pile onto today.
+    """
+    try:
+        return datetime.fromtimestamp(Path(path).stat().st_mtime, tz=timezone.utc)
+    except Exception:
+        return _now()
+
 def _pid_alive(pid: int) -> bool:
     """Cross-platform process liveness probe.
 
@@ -640,7 +650,7 @@ def _scan_sessions_sync():
                         data = json.loads(line)
                         sid = data.get("sessionId")
                         if not sid: continue
-                        ts = datetime.fromtimestamp(data.get("timestamp") / 1000, tz=timezone.utc) if data.get("timestamp") else _now()
+                        ts = datetime.fromtimestamp(data.get("timestamp") / 1000, tz=timezone.utc) if data.get("timestamp") else _file_mtime_utc(claude_history)
                         if sid not in claude_sessions or ts > claude_sessions[sid]["timestamp"]:
                             claude_sessions[sid] = {"id": sid, "agent": "claude", "project": apply_alias(data.get("project", "unknown")), "timestamp": ts, "display": data.get("display"), "tokens": {"input": 0, "output": 0, "cached": 0, "total": 0}, "mcp_tools": [], "has_plan": False, "plans": [], "model": None, "artifacts": []}
                     except: continue
@@ -745,7 +755,7 @@ def _scan_sessions_sync():
                     try:
                         data = json.loads(line); sid = data.get("id")
                         if not sid: continue
-                        ts = _aware(datetime.fromisoformat(data.get("updated_at").replace('Z', '+00:00'))) if data.get("updated_at") else _now()
+                        ts = _aware(datetime.fromisoformat(data.get("updated_at").replace('Z', '+00:00'))) if data.get("updated_at") else _file_mtime_utc(codex_index)
                         if sid not in codex_sessions or ts > codex_sessions[sid]["timestamp"]:
                             codex_sessions[sid] = {"id": sid, "agent": "codex", "project": "unknown", "timestamp": ts, "text": data.get("thread_name"), "tokens": {"input": 0, "output": 0, "cached": 0, "total": 0}, "mcp_tools": [], "has_plan": False, "plans": [], "model": None, "artifacts": []}
                     except: continue
@@ -857,7 +867,7 @@ def _scan_sessions_sync():
                                 # kind="main" means Gemini CLI; absent/other means Antigravity
                                 session_kind = data.get("kind")
                                 effective_agent = agent_type if session_kind == "main" else "antigravity"
-                                ts = _aware(datetime.fromisoformat(data.get("lastUpdated").replace('Z', '+00:00'))) if data.get("lastUpdated") else _now()
+                                ts = _aware(datetime.fromisoformat(data.get("lastUpdated").replace('Z', '+00:00'))) if data.get("lastUpdated") else _file_mtime_utc(cf)
                                 tokens = {"input": 0, "output": 0, "cached": 0, "total": 0}
                                 mcp_tools = []; has_plan = False; first_msg = ""; plans = []
                                 has_user = False
@@ -1034,7 +1044,7 @@ def _scan_sessions_sync():
                     try:
                         sid = cf.stem; mcp_tools = []; has_plan = False; first_msg = ""; plans = []
                         tokens = {"input": 0, "output": 0, "cached": 0, "total": 0}
-                        project_path = "unknown"; last_ts = _now(); model = None
+                        project_path = "unknown"; last_ts = _file_mtime_utc(cf); model = None
                         artifacts = []
                         with open(cf, "r", encoding="utf-8", errors="replace") as f:
                             for line in f:
@@ -1076,7 +1086,7 @@ def _scan_sessions_sync():
                 with open(cf, "r", encoding="utf-8", errors="replace") as f:
                     data = json.load(f); meta = data.get("metadata", {}); sid = meta.get("session_id")
                     if not sid: continue
-                    ts = _aware(datetime.fromisoformat(meta.get("start_time"))) if meta.get("start_time") else _now()
+                    ts = _aware(datetime.fromisoformat(meta.get("start_time"))) if meta.get("start_time") else _file_mtime_utc(cf)
                     stats = meta.get("stats", {})
                     tokens = {"input": stats.get("session_prompt_tokens", 0), "output": stats.get("session_completion_tokens", 0), "cached": stats.get("context_tokens", 0), "total": stats.get("session_total_llm_tokens", 0)}
                     mcp_tools = [t.get("function", {}).get("name") for t in meta.get("tools_available", []) if t.get("function", {}).get("name")]
@@ -1194,7 +1204,7 @@ def _scan_sessions_sync():
                             
                             # Fallback to creation date if no requests
                             creation_ts = data.get("creationDate") or data.get("timestamp")
-                            last_ts = datetime.fromtimestamp(creation_ts / 1000, tz=timezone.utc) if isinstance(creation_ts, (int, float)) else _now()
+                            last_ts = datetime.fromtimestamp(creation_ts / 1000, tz=timezone.utc) if isinstance(creation_ts, (int, float)) else _file_mtime_utc(cf)
                             
                             for req in data.get("requests", []):
                                 msg_text = req.get("message", {}).get("text", "") or ""
