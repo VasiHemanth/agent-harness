@@ -2969,6 +2969,14 @@ async def get_summarizer_config():
 async def put_summarizer_config(cfg: dict = Body(...)):
     return _summaries.save_config(cfg)
 
+
+@app.get("/summarizer/ollama/models")
+async def list_ollama_models():
+    """Enumerate the local Ollama model registry. Used by the settings UI to
+    let the user pick which model summarizes their traces."""
+    from summarizers.ollama import list_installed_models
+    return {"models": list_installed_models()}
+
 @app.get("/sessions/{session_id}/summary")
 async def get_summary(session_id: str):
     cached = _summaries.get_cached(session_id)
@@ -2996,7 +3004,7 @@ async def make_summary(session_id: str, agent: str, force: bool = False):
     narrative = None
     gen_error = None
     if cfg.get("enabled") and backend_name:
-        sm = get_summarizer(backend_name)
+        sm = get_summarizer(backend_name, cfg.get("model"))
         if sm and sm.is_available():
             try:
                 raw = sm.summarize(_summaries.build_prompt(brief))

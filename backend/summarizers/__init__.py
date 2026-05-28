@@ -28,7 +28,12 @@ _ALL: List[BaseSummarizer] = [
 _BY_NAME: Dict[str, BaseSummarizer] = {s.name: s for s in _ALL}
 
 
-def get_summarizer(name: str) -> Optional[BaseSummarizer]:
+def get_summarizer(name: str, model: Optional[str] = None) -> Optional[BaseSummarizer]:
+    """Look up a backend by name. For Ollama, if ``model`` is given, return a
+    fresh instance bound to that model rather than the registry singleton
+    (which auto-picks the first installed model)."""
+    if name == "ollama" and model:
+        return OllamaSummarizer(model=model)
     return _BY_NAME.get(name)
 
 

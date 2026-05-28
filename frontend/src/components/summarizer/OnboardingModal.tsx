@@ -22,6 +22,8 @@ export default function OnboardingModal() {
   const [open, setOpen] = useState(false);
   const [backends, setBackends] = useState<SummarizerBackend[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  // Only meaningful when selected === "ollama".
+  const [model, setModel] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,7 +60,7 @@ export default function OnboardingModal() {
       await putSummarizerConfig({
         enabled: selected !== null,
         backend: selected,
-        model: null,
+        model: selected === "ollama" ? model : null,
       });
       dismiss();
     } catch (e) {
@@ -112,7 +114,13 @@ export default function OnboardingModal() {
             installed. The deterministic brief always works without this.
           </p>
 
-          <BackendPicker backends={backends} selected={selected} onSelect={setSelected} />
+          <BackendPicker
+            backends={backends}
+            selected={selected}
+            onSelect={(name) => { setSelected(name); if (name !== "ollama") setModel(null); }}
+            model={model}
+            onModelChange={setModel}
+          />
 
           {error && (
             <p className="text-[12px] text-[var(--tt-danger-fg)]">{error}</p>

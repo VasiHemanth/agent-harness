@@ -13,6 +13,8 @@ export default function SettingsPage() {
   const [config, setConfig] = useState<SummarizerConfig | null>(null);
   const [backends, setBackends] = useState<SummarizerBackend[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  // Only meaningful when selected === "ollama"; null = "auto-pick first model".
+  const [model, setModel] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -26,6 +28,7 @@ export default function SettingsPage() {
         setConfig(cfg);
         setBackends(list);
         setSelected(cfg.enabled ? cfg.backend : null);
+        setModel(cfg.model);
         setLoading(false);
       })
       .catch((e) => {
@@ -44,10 +47,12 @@ export default function SettingsPage() {
       const next = await putSummarizerConfig({
         enabled: selected !== null,
         backend: selected,
-        model: null,
+        // Model field is only relevant for ollama right now; null otherwise.
+        model: selected === "ollama" ? model : null,
       });
       setConfig(next);
       setSelected(next.enabled ? next.backend : null);
+      setModel(next.model);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (e) {
@@ -57,7 +62,10 @@ export default function SettingsPage() {
     }
   };
 
-  const dirty = config ? selected !== (config.enabled ? config.backend : null) : false;
+  const dirty = config
+    ? (selected !== (config.enabled ? config.backend : null))
+        || (selected === "ollama" && model !== config.model)
+    : false;
 
   return (
     <div className="px-8 py-8 max-w-[900px] mx-auto space-y-10 pb-20">
@@ -92,7 +100,13 @@ export default function SettingsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <BackendPicker backends={backends} selected={selected} onSelect={setSelected} />
+              <BackendPicker
+                backends={backends}
+                selected={selected}
+                onSelect={(name) => { setSelected(name); if (name !== "ollama") setModel(null); }}
+                model={model}
+                onModelChange={setModel}
+              />
 
               {error && <p className="text-[12px] text-[var(--tt-danger-fg)]">{error}</p>}
 

@@ -64,6 +64,14 @@ export const getSummarizerConfig = () => api<SummarizerConfig>("/config/summariz
 export const getAvailableBackends = () =>
   api<{ backends: SummarizerBackend[] }>("/summarizer/available").then((r) => r.backends);
 
+export interface OllamaModel {
+  name: string;
+  size: string;
+  modified: string;
+}
+export const listOllamaModels = () =>
+  api<{ models: OllamaModel[] }>("/summarizer/ollama/models").then((r) => r.models);
+
 export const putSummarizerConfig = (cfg: SummarizerConfig) =>
   api<SummarizerConfig>("/config/summarizer", {
     method: "PUT",
