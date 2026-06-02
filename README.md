@@ -1,6 +1,6 @@
 # Token Telemetry (TokenTelemetry)
 
-> **Local observability for AI coding agents AND autonomous agents — Claude Code, Codex, Gemini CLI, Cursor, Copilot, Qwen, OpenCode, Vibe, Antigravity, _and_ Nous Research's Hermes Agent.**
+> **Local observability for AI coding agents AND autonomous agents — Claude Code, Codex, Gemini CLI, Cursor, Copilot, Qwen, OpenCode, Vibe, Antigravity, Grok Build, _and_ Nous Research's Hermes Agent.**
 
 **Token Telemetry** (one word: **TokenTelemetry**) — free, open-source, 100% local.
 
@@ -54,6 +54,7 @@ TokenTelemetry reads session logs from these agents automatically.
 | **Qwen**                    | ✅ Fully supported |
 | **Vibe**                    | ✅ Fully supported |
 | **Antigravity**             | ✅ Fully supported |
+| **Grok Build** (xAI)        | ✅ Fully supported |
 
 ### Autonomous agents
 
