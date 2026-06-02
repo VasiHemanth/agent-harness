@@ -1,6 +1,26 @@
 {
   "releases": [
     {
+      "tag": "2026-06-02",
+      "title": "Grok Build support + tracking fixes",
+      "highlights": [
+        {
+          "title": "Grok Build (xAI) support",
+          "description": "TokenTelemetry now tracks xAI's Grok Build coding agent — sessions, context usage, tool calls, permission decisions, and plan mode — with a dedicated forensics card. That's 11 agents tracked in total.",
+          "href": "/"
+        },
+        {
+          "title": "GitHub Copilot tracking restored",
+          "description": "Recent VS Code versions changed how Copilot chats are stored on disk, which made new sessions read as zero. TokenTelemetry now reads the new format, so your recent Copilot sessions show up again.",
+          "href": "/"
+        },
+        {
+          "title": "Smarter 'Back' from a session",
+          "description": "Opening a session and hitting Back now returns you to the page you came from — e.g. the project you were viewing — instead of always jumping to the dashboard."
+        }
+      ]
+    },
+    {
       "tag": "2026-05-28",
       "title": "Summarizer + ports + update banner",
       "highlights": [
